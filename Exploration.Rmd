@@ -25,7 +25,7 @@ library(purrr)
 
 ## Dataset
 
-#### Glosario:
+### Glosario:
 **new_fdi:**	New Foreign Direct Investment Inflows. Millions of Dollars. 
 **reinv_profits:**	Reinvestment of Profits - Foreign Direct Investment Inflows. Millions of Dollars. 
 **intercom_acc:**	Intercompany Accounts - Foreign Direct Investment Inflows. Millions of Dollars. 
@@ -57,24 +57,61 @@ nearshoring <- nearshoring %>%
 colnames(nearshoring)
 ```
 
-## Overview and Adjustment
+## Overview and Adjustments
 
-```{r Summary, warning:FALSE}
-summary(nearshoring)
-```
+b. Crear y/o transformar variables (e.g., variables nominales, variables reales, variables ponderadas, etc.)
 
 ```{r Modifications, message=FALSE, warning=FALSE}
 # Convertir valores de USD a MXN
 nearshoring <- nearshoring %>%
-  mutate(across(c(new_fdi, reinv_profits, intercom_acc, total_fdi), 
+  mutate(across(c(new_fdi, reinv_profits, intercom_acc, total_fdi, exports_miles_dlls), 
                 ~ . * exchange_rate, .names = "mxn_{.col}"))
 
 # Ajustar valores a precios reales (2018)
 nearshoring <- nearshoring %>%
-  mutate(across(c(mxn_new_fdi, mxn_reinv_profits, mxn_intercom_acc, mxn_total_fdi, real_wage), 
+  mutate(across(c(mxn_new_fdi, mxn_reinv_profits, mxn_intercom_acc, mxn_total_fdi, real_wage, mxn_exports_miles_dlls), 
                 ~ . / inpc * 100, .names = "real_{.col}"))
 
+# Subset solo con variables reales en MXN (sin dólares)
+nearshoring_clean <- nearshoring %>%
+  select(state, year, region_name, region_num, 
+         real_mxn_new_fdi, real_mxn_reinv_profits, real_mxn_intercom_acc, 
+         real_mxn_total_fdi, real_wage, real_mxn_exports_miles_dlls, 
+         crime_rate, unemployment, employment, business_activity, 
+         pop_density, good_governance, ratio_public_investment, 
+         lq_primary, lq_secondary, lq_tertiary, patents_rate, 
+         exchange_rate, inpc, border_distance, trump_election)
+
 # Verificar cambios
-summary(nearshoring)
+summary(nearshoring_clean)
+
+# Visualizar primeras filas
+head(nearshoring_clean)
 ```
+
+
+```{r}
+
+```
+
+
+## Analisis Exploratorio
+
+### Estadísticos Descriptivos y de Dispersión
+
+### Visualización de los Datos
+
+#### Análisis Univariado
+
+
+
+#### Análisis Bivariado
+
+
+
+## Hallazgos
+
+
+
+## Referencias
 
