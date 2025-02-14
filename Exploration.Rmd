@@ -108,7 +108,7 @@ ggplot(cor_long, aes(Var1, Var2, fill = value)) +
                        name="Correlación") +
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1)) +
-  labs(title = "Matriz", x = "", y ="")
+  labs(title = "Correlation Matrix of Numeric Variables", x = "", y ="")
 
 ```
 
