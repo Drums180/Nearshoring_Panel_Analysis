@@ -1,0 +1,80 @@
+---
+title: "Activity 1"
+author: "David Dominguez - 29092830"
+date: "2025-02-14"
+output: html_document
+---
+
+## Librerias
+
+```{r Librerias}
+library(dplyr)
+library(ggplot2)
+library(tidyr)
+library(readr)
+library(readxl)
+library(corrplot)
+library(rpart)
+library(rpart.plot)
+library(stringr)
+library(stringi)
+library(janitor)
+library(lubridate)
+library(purrr) 
+```
+
+## Dataset
+
+#### Glosario:
+**new_fdi:**	New Foreign Direct Investment Inflows. Millions of Dollars. 
+**reinv_profits:**	Reinvestment of Profits - Foreign Direct Investment Inflows. Millions of Dollars. 
+**intercom_acc:**	Intercompany Accounts - Foreign Direct Investment Inflows. Millions of Dollars. 
+**total_fdi:**	Total Foreign Direct Investment Inflows. Millions of Dollars. 
+**crime_rate:**	Crime rate per 100,000 state's population. 
+**unemployment:**	Percentaje of unemployed population. 
+**employment:** 	Percentaje of employed population. 
+**business_activity:**	Index of economic activity weighted by the state's distance to nearest U.S. port of entry. 
+**real_wage:**	Real wage using 2018 INPC = 100. MXN Pesos.
+**pop_density:**	Population per state's land area km2. 
+**good_governance:**	Ratio between state's public investment and its public debt. 
+**ratio_public_investment:**	Ratio between state's public investment and its gross domestic product (GDP). 
+**lq_primary:**	Location quotient of employed people in primary industry. 
+**lq_secondary:**	Location quotient of employed people in secondary sector. 
+**lq_tertiary	Location:** quotient of employed people in tertiary sector. 
+**exchange_rate:**	MXN pesos per 1 USD
+**patents_rate:**	Number of R&D patentes per 100,000 state's population
+**inpc:**	National Price Consumer Index. 2018 = 100
+
+```{r Dataset, echo=FALSE, message=FALSE, warning=FALSE}
+nearshoring <- read_excel('panel_data.xlsx')
+
+# Renombrar columnas
+nearshoring <- nearshoring %>%
+  rename(region_name = `region...23`, 
+         region_num = `region...24`)
+
+# Verificar los cambios
+colnames(nearshoring)
+```
+
+## Overview and Adjustment
+
+```{r Summary, warning:FALSE}
+summary(nearshoring)
+```
+
+```{r Modifications, message=FALSE, warning=FALSE}
+# Convertir valores de USD a MXN
+nearshoring <- nearshoring %>%
+  mutate(across(c(new_fdi, reinv_profits, intercom_acc, total_fdi), 
+                ~ . * exchange_rate, .names = "mxn_{.col}"))
+
+# Ajustar valores a precios reales (2018)
+nearshoring <- nearshoring %>%
+  mutate(across(c(mxn_new_fdi, mxn_reinv_profits, mxn_intercom_acc, mxn_total_fdi, real_wage), 
+                ~ . / inpc * 100, .names = "real_{.col}"))
+
+# Verificar cambios
+summary(nearshoring)
+```
+
