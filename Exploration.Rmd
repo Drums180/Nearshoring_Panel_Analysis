@@ -91,6 +91,27 @@ head(nearshoring_clean)
 
 
 ```{r}
+library(ggplot2)
+library(reshape2)
+
+
+nearshoring_numeric <- nearshoring[, !names(nearshoring) %in% c("real_wage", "total_fdi","intercom_acc","reinv_profits","new_fdi","total_fdi", "mxn_total_fdi","mxn_intercom_acc","mxn_reinv_profit","mxn_new_fdi")]
+
+nearshoring_numeric <- nearshoring_numeric[, sapply(nearshoring_numeric, is.numeric)]
+
+cor_matrix <- cor(nearshoring_numeric, use = "complete.obs")
+
+cor_long <- melt(cor_matrix)
+
+
+ggplot(cor_long, aes(Var1, Var2, fill = value)) +
+  geom_tile() +
+  scale_fill_gradient2(low = "blue", high = "red", mid = "white", 
+                       midpoint = 0, limit = c(-1,1), space = "Lab",
+                       name="Correlación") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1)) +
+  labs(title = "Matriz", x = "", y ="")
 
 ```
 
