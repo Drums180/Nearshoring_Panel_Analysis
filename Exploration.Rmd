@@ -10,6 +10,7 @@ output: html_document
 ```{r Librerias}
 library(dplyr)
 library(ggplot2)
+library(reshape2)
 library(tidyr)
 library(readr)
 library(readxl)
@@ -91,11 +92,7 @@ head(nearshoring_clean)
 
 
 ```{r}
-library(ggplot2)
-library(reshape2)
-
-
-nearshoring_numeric <- nearshoring[, !names(nearshoring) %in% c("real_wage", "total_fdi","intercom_acc","reinv_profits","new_fdi","total_fdi", "mxn_total_fdi","mxn_intercom_acc","mxn_reinv_profit","mxn_new_fdi")]
+nearshoring_numeric <- nearshoring_clean[, !names(nearshoring_clean) %in% c("real_wage", "total_fdi","intercom_acc","reinv_profits","new_fdi","total_fdi", "mxn_total_fdi","mxn_intercom_acc","mxn_reinv_profit","mxn_new_fdi")]
 
 nearshoring_numeric <- nearshoring_numeric[, sapply(nearshoring_numeric, is.numeric)]
 
