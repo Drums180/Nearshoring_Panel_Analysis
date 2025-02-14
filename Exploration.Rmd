@@ -48,6 +48,8 @@ library(purrr)
 
 ```{r Dataset, echo=FALSE, message=FALSE, warning=FALSE}
 nearshoring <- read_excel('panel_data.xlsx')
+nearshoring <- pdata.frame('panel_data.xlsx')
+
 
 # Renombrar columnas
 nearshoring <- nearshoring %>%
