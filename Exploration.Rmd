@@ -248,8 +248,6 @@ df_summary %>%
   kable_styling(bootstrap_options = c("striped", "hover", "condensed"), full_width = FALSE)
 ```
   
-    
-   
 ```{r BA Entidad, echo=FALSE}
 df_estadisticas <- nearshoring_clean %>%
   filter(region_name %in% c("Bajio", "Centro","Norte"))
