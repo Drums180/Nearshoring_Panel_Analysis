@@ -100,6 +100,7 @@ nearshoring_clean <- nearshoring %>%
          exchange_rate, inpc, border_distance, trump_election)
 
 # Verificar cambios
+
 #summary(nearshoring_clean)
 
 # Visualizar primeras filas
@@ -273,6 +274,7 @@ df_summary %>%
   kable(format = "html", caption = "Comportamiento de la <b>Actividad de Negocio</b> por Entidad") %>%
   kable_styling(bootstrap_options = c("striped", "hover", "condensed"), full_width = FALSE)
 ```
+
 
 ### Visualización de los Datos
 
