@@ -15,9 +15,11 @@ knitr::opts_chunk$set(warning = FALSE, message = FALSE)
 knitr::include_graphics("Imagenes/Nearshoring-en-Mexico.jpg")
 ```
 
+
 ## Librerias
 
 ```{r Librerias}
+
 library(dplyr)       # Manipulación y transformación de datos
 library(ggplot2)     # Visualización y gráficos
 library(reshape2)    # Reestructuración de datos (melt y cast)
@@ -58,6 +60,7 @@ library(kableExtra)  # Mejora del formato y estilo de las tablas creadas con kni
 * **patents_rate:**	Number of R&D patentes per 100,000 state's population  
 * **inpc:**	National Price Consumer Index. 2018 = 100  
 
+
 ```{r Dataset, echo=FALSE, message=FALSE, warning=FALSE}
 nearshoring <- read_excel('panel_data.xlsx')
 
@@ -78,6 +81,7 @@ b. Crear y/o transformar variables (e.g., variables nominales, variables reales,
 # Convertir valores de USD a MXN
 nearshoring <- nearshoring %>%
   mutate(across(c(new_fdi, reinv_profits, intercom_acc, total_fdi, exports_miles_dlls), 
+
                 ~ . * exchange_rate, .names = "mxn_{.col}"))
 
 # Ajustar valores a precios reales (2018)

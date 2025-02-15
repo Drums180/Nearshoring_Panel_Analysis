@@ -1817,6 +1817,7 @@ variables reales, variables ponderadas, etc.)</li>
 <pre class="r"><code># Convertir valores de USD a MXN
 nearshoring &lt;- nearshoring %&gt;%
   mutate(across(c(new_fdi, reinv_profits, intercom_acc, total_fdi, exports_miles_dlls), 
+
                 ~ . * exchange_rate, .names = &quot;mxn_{.col}&quot;))
 
 # Ajustar valores a precios reales (2018)
