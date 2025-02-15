@@ -1,51 +1,65 @@
 ---
-title: "Activity 1"
-author: "David Dominguez - 29092830"
-date: "2025-02-14"
-output: html_document
+title: "Nearshoring en México: Análisis Exploratorio"
+author: "David Dominguez - Arturo Silva"
+date: "`r Sys.Date()`"
+output: 
+  html_document:
+    toc: true
+    toc_float: true
 ---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(warning = FALSE, message = FALSE)
+```
+
+```{r Banner-portada, echo=FALSE, fig.cap="<small>Foto FOREIGN AFFAIRS LATINOAMÉRICA</small>", out.width='100%'}
+knitr::include_graphics("Imagenes/Nearshoring-en-Mexico.jpg")
+```
+
 
 ## Librerias
 
 ```{r Librerias}
-library(dplyr)
-library(ggplot2)
-library(reshape2)
-library(tidyr)
-library(readr)
-library(readxl)
-library(corrplot)
-library(rpart)
-library(rpart.plot)
-library(stringr)
-library(stringi)
-library(janitor)
-library(lubridate)
-library(purrr) 
-library(plm)
+library(dplyr)       # Manipulación y transformación de datos
+library(ggplot2)     # Visualización y gráficos
+library(reshape2)    # Reestructuración de datos (melt y cast)
+library(tidyr)       # Organización y "tidy" de datos
+library(readr)       # Lectura rápida de archivos de texto (csv, etc.)
+library(readxl)      # Importación de archivos Excel
+library(corrplot)    # Visualización de matrices de correlación
+library(rpart)       # Modelos de árboles de decisión para clasificación y regresión
+library(rpart.plot)  # Visualización de árboles de decisión
+library(stringr)     # Manipulación de cadenas de texto
+library(stringi)     # Procesamiento avanzado de cadenas (Unicode, etc.)
+library(janitor)     # Limpieza y formateo de datos
+library(lubridate)   # Manejo y manipulación de fechas y tiempos
+library(purrr)       # Programación funcional y manejo de listas
+library(knitr)       # Generación de informes y tablas en R Markdown
+library(kableExtra)  # Mejora del formato y estilo de las tablas creadas con knitr::kable
+library(plm)         # Conversión a datos panel
 ```
 
 ## Dataset
 
 ### Glosario:
-**new_fdi:**	New Foreign Direct Investment Inflows. Millions of Dollars. 
-**reinv_profits:**	Reinvestment of Profits - Foreign Direct Investment Inflows. Millions of Dollars. 
-**intercom_acc:**	Intercompany Accounts - Foreign Direct Investment Inflows. Millions of Dollars. 
-**total_fdi:**	Total Foreign Direct Investment Inflows. Millions of Dollars. 
-**crime_rate:**	Crime rate per 100,000 state's population. 
-**unemployment:**	Percentaje of unemployed population. 
-**employment:** 	Percentaje of employed population. 
-**business_activity:**	Index of economic activity weighted by the state's distance to nearest U.S. port of entry. 
-**real_wage:**	Real wage using 2018 INPC = 100. MXN Pesos.
-**pop_density:**	Population per state's land area km2. 
-**good_governance:**	Ratio between state's public investment and its public debt. 
-**ratio_public_investment:**	Ratio between state's public investment and its gross domestic product (GDP). 
-**lq_primary:**	Location quotient of employed people in primary industry. 
-**lq_secondary:**	Location quotient of employed people in secondary sector. 
-**lq_tertiary	Location:** quotient of employed people in tertiary sector. 
-**exchange_rate:**	MXN pesos per 1 USD
-**patents_rate:**	Number of R&D patentes per 100,000 state's population
-**inpc:**	National Price Consumer Index. 2018 = 100
+* **new_fdi:**	New Foreign Direct Investment Inflows. Millions of Dollars.  
+* **reinv_profits:**	Reinvestment of Profits - Foreign Direct Investment Inflows. Millions of Dollars.  
+* **intercom_acc:**	Intercompany Accounts - Foreign Direct Investment Inflows. Millions of Dollars.  
+* **total_fdi:**	Total Foreign Direct Investment Inflows. Millions of Dollars.  
+* **crime_rate:**	Crime rate per 100,000 state's population.  
+* **unemployment:**	Percentaje of unemployed population.  
+* **employment:** 	Percentaje of employed population.  
+* **business_activity:**	Index of economic activity weighted by the state's distance to nearest U.S. port of entry.  
+* **real_wage:**	Real wage using 2018 INPC = 100. MXN Pesos. 
+* **pop_density:**	Population per state's land area km2.  
+* **good_governance:**	Ratio between state's public investment and its public debt.  
+* **ratio_public_investment:**	Ratio between state's public investment and its gross domestic product (GDP).  
+* **lq_primary:**	Location quotient of employed people in primary industry.  
+* **lq_secondary:**	Location quotient of employed people in secondary sector.  
+* **lq_tertiary	Location:** quotient of employed people in tertiary sector.  
+* **exchange_rate:**	MXN pesos per 1 USD  
+* **patents_rate:**	Number of R&D patentes per 100,000 state's population  
+* **inpc:**	National Price Consumer Index. 2018 = 100  
+
 
 ```{r Dataset, echo=FALSE, message=FALSE, warning=FALSE}
 # Read the Excel file
@@ -71,6 +85,7 @@ b. Crear y/o transformar variables (e.g., variables nominales, variables reales,
 # Convertir valores de USD a MXN
 nearshoring <- nearshoring %>%
   mutate(across(c(new_fdi, reinv_profits, intercom_acc, total_fdi, exports_miles_dlls), 
+
                 ~ . * exchange_rate, .names = "mxn_{.col}"))
 
 # Ajustar valores a precios reales (2018)
@@ -89,7 +104,8 @@ nearshoring_clean <- nearshoring %>%
          exchange_rate, inpc, border_distance, trump_election)
 
 # Verificar cambios
-summary(nearshoring_clean)
+
+#summary(nearshoring_clean)
 
 # Visualizar primeras filas
 head(nearshoring_clean)
@@ -121,6 +137,148 @@ ggplot(cor_long, aes(Var1, Var2, fill = value)) +
 ## Analisis Exploratorio
 
 ### Estadísticos Descriptivos y de Dispersión
+
+#### Estadísticas Generales  
+
+```{r Estadisticas Generales, echo=FALSE}
+# Vector con las variables específicas
+variables_interes <- c("pop_density","employment","crime_rate", "business_activity", "border_distance","lq_primary","lq_secondary","lq_tertiary")
+
+# Selecciona las variables específicas y calcula las estadísticas
+df_summary <- data.frame(
+  #Variable = variables_interes,
+  media   = sapply(nearshoring_clean[variables_interes], mean, na.rm = TRUE),
+  mínimo  = sapply(nearshoring_clean[variables_interes], min, na.rm = TRUE),
+  Q1      = sapply(nearshoring_clean[variables_interes], quantile, 0.25, na.rm = TRUE),
+  mediana = sapply(nearshoring_clean[variables_interes], median, na.rm = TRUE),
+  Q3      = sapply(nearshoring_clean[variables_interes], quantile, 0.75, na.rm = TRUE),
+  máximo  = sapply(nearshoring_clean[variables_interes], max, na.rm = TRUE),
+  std     = sapply(nearshoring_clean[variables_interes], sd, na.rm = TRUE)
+) %>%
+  mutate(across(where(is.numeric), ~ formatC(.,
+                                               format = "f",
+                                               big.mark = ",",
+                                               digits = 2)))
+
+# Genera la tabla en R Markdown
+df_summary %>%
+  kable(format = "html", caption = "Estadísticas descriptivas por variable") %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"), full_width = FALSE)
+```
+
+#### Nueva Inversión Extranjera
+
+```{r N-FDI Region, echo=FALSE}
+# Generación de estadísticas por Región
+df_summary <- nearshoring_clean %>%
+  group_by(region_name) %>%
+  summarise(
+    media   = mean(real_mxn_new_fdi, na.rm = TRUE),
+    mínimo  = min(real_mxn_new_fdi, na.rm = TRUE),
+    Q1      = quantile(real_mxn_new_fdi, 0.25, na.rm = TRUE),
+    mediana = median(real_mxn_new_fdi, na.rm = TRUE),
+    Q3      = quantile(real_mxn_new_fdi, 0.75, na.rm = TRUE),
+    máximo  = max(real_mxn_new_fdi, na.rm = TRUE),
+    std     = sd(real_mxn_new_fdi, na.rm = TRUE)
+  )%>%
+  mutate(across(where(is.numeric), ~ formatC(.,
+                                               format = "f",
+                                               big.mark = ",",
+                                               digits = 2)))
+
+# Visualización de Estadísticas
+df_summary %>%
+  kable(format = "html", caption = "Comportamiento de la <b>Nueva Inversión Extranjera</b> por región") %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"), full_width = FALSE)
+```
+  
+  
+    
+```{r N-FDI Entidad, echo=FALSE}
+df_estadisticas <- nearshoring_clean %>%
+  filter(region_name %in% c("Bajio", "Centro","Norte"))
+
+# Generación de estadísticas por Región
+df_summary <- df_estadisticas %>%
+  group_by(region_name,state) %>%
+  summarise(
+    media   = mean(real_mxn_new_fdi, na.rm = TRUE),
+    mínimo  = min(real_mxn_new_fdi, na.rm = TRUE),
+    Q1      = quantile(real_mxn_new_fdi, 0.25, na.rm = TRUE),
+    mediana = median(real_mxn_new_fdi, na.rm = TRUE),
+    Q3      = quantile(real_mxn_new_fdi, 0.75, na.rm = TRUE),
+    máximo  = max(real_mxn_new_fdi, na.rm = TRUE),
+    std     = sd(real_mxn_new_fdi, na.rm = TRUE)
+  )%>%
+  ungroup() %>%
+  arrange(region_name,state)%>%
+  mutate(across(where(is.numeric), ~ formatC(.,
+                                               format = "f",
+                                               big.mark = ",",
+                                               digits = 2)))
+
+# Visualización de Estadísticas
+df_summary %>%
+  kable(format = "html", caption = "Comportamiento de la <b>Nueva Inversión Extranjera</b> por Entidad") %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"), full_width = FALSE)
+```
+
+#### Actividad de Negocios
+```{r BA Region, echo=FALSE}
+# Generación de estadísticas por Región
+df_summary <- nearshoring_clean %>%
+  group_by(region_name) %>%
+  summarise(
+    media   = mean(business_activity, na.rm = TRUE),
+    mínimo  = min(business_activity, na.rm = TRUE),
+    Q1      = quantile(business_activity, 0.25, na.rm = TRUE),
+    mediana = median(business_activity, na.rm = TRUE),
+    Q3      = quantile(business_activity, 0.75, na.rm = TRUE),
+    máximo  = max(business_activity, na.rm = TRUE),
+    std     = sd(business_activity, na.rm = TRUE)
+  )%>%
+  mutate(across(where(is.numeric), ~ formatC(.,
+                                               format = "f",
+                                               big.mark = ",",
+                                               digits = 2)))
+
+# Visualización de Estadísticas
+df_summary %>%
+  kable(format = "html", caption = "Comportamiento de la <b>Actividad de Negocio</b> por región") %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"), full_width = FALSE)
+```
+  
+    
+   
+```{r BA Entidad, echo=FALSE}
+df_estadisticas <- nearshoring_clean %>%
+  filter(region_name %in% c("Bajio", "Centro","Norte"))
+
+# Generación de estadísticas por Región
+df_summary <- df_estadisticas %>%
+  group_by(region_name,state) %>%
+  summarise(
+    media   = mean(business_activity, na.rm = TRUE),
+    mínimo  = min(business_activity, na.rm = TRUE),
+    Q1      = quantile(business_activity, 0.25, na.rm = TRUE),
+    mediana = median(business_activity, na.rm = TRUE),
+    Q3      = quantile(business_activity, 0.75, na.rm = TRUE),
+    máximo  = max(business_activity, na.rm = TRUE),
+    std     = sd(business_activity, na.rm = TRUE)
+  )%>%
+  ungroup() %>%
+  arrange(region_name,state)%>%
+  mutate(across(where(is.numeric), ~ formatC(.,
+                                               format = "f",
+                                               big.mark = ",",
+                                               digits = 2)))
+
+# Visualización de Estadísticas
+df_summary %>%
+  kable(format = "html", caption = "Comportamiento de la <b>Actividad de Negocio</b> por Entidad") %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"), full_width = FALSE)
+```
+
 
 ### Visualización de los Datos
 
