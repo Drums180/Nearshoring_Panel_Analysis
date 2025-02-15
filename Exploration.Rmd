@@ -22,6 +22,7 @@ library(stringi)
 library(janitor)
 library(lubridate)
 library(purrr) 
+library(plm)
 ```
 
 ## Dataset
@@ -47,14 +48,16 @@ library(purrr)
 **inpc:**	National Price Consumer Index. 2018 = 100
 
 ```{r Dataset, echo=FALSE, message=FALSE, warning=FALSE}
+# Read the Excel file
 nearshoring <- read_excel('panel_data.xlsx')
-nearshoring <- pdata.frame('panel_data.xlsx')
-
 
 # Renombrar columnas
 nearshoring <- nearshoring %>%
   rename(region_name = `region...23`, 
          region_num = `region...24`)
+
+# Convert to a panel data frame with 'state' as the cross-section and 'year' as the time variable
+nearshoring <- pdata.frame(nearshoring, index = c("state", "year"))
 
 # Verificar los cambios
 colnames(nearshoring)
