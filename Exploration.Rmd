@@ -19,7 +19,6 @@ knitr::include_graphics("Imagenes/Nearshoring-en-Mexico.jpg")
 ## Librerias
 
 ```{r Librerias}
-
 library(dplyr)       # Manipulación y transformación de datos
 library(ggplot2)     # Visualización y gráficos
 library(reshape2)    # Reestructuración de datos (melt y cast)
@@ -36,6 +35,7 @@ library(lubridate)   # Manejo y manipulación de fechas y tiempos
 library(purrr)       # Programación funcional y manejo de listas
 library(knitr)       # Generación de informes y tablas en R Markdown
 library(kableExtra)  # Mejora del formato y estilo de las tablas creadas con knitr::kable
+library(plm)         # Conversión a datos panel
 ```
 
 ## Dataset
@@ -62,12 +62,16 @@ library(kableExtra)  # Mejora del formato y estilo de las tablas creadas con kni
 
 
 ```{r Dataset, echo=FALSE, message=FALSE, warning=FALSE}
+# Read the Excel file
 nearshoring <- read_excel('panel_data.xlsx')
 
 # Renombrar columnas
 nearshoring <- nearshoring %>%
   rename(region_name = `region...23`, 
          region_num = `region...24`)
+
+# Convert to a panel data frame with 'state' as the cross-section and 'year' as the time variable
+nearshoring <- pdata.frame(nearshoring, index = c("state", "year"))
 
 # Verificar los cambios
 colnames(nearshoring)
