@@ -306,6 +306,99 @@ df_summary %>%
 ### Visualización de los Datos
 
 #### Análisis Univariado
+```{r}
+#Quitamos exports por que sus datos opacan los de mas graficos
+nearshoring2 <- nearshoring %>%
+  select(-exports_miles_dlls) %>%
+  select(where(is.numeric)) %>% 
+  select(matches("real_mxn"))
+# Asegurar que solo queden numéricas
+
+# Transformar los datos a formato largo para ggplot
+nearshoring_largo <- nearshoring2 %>%
+  pivot_longer(cols = everything(), names_to = "Variable", values_to = "Valor")
+
+# Crear boxplots sin outliers con límites en el eje Y
+ggplot(nearshoring_largo, aes(x = Variable, y = Valor)) +
+  geom_boxplot(outlier.shape = NA, fill = "steelblue", color = "black") +  # Sin outliers
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  labs(title = "Boxplots de variables numéricas en nearshoring (sin outliers)", 
+       x = "Variable", 
+       y = "Valor") +
+  ylim(-10000, 35000)
+```
+```{r}
+#Quitamos exports por que sus datos opacan los de mas graficos
+nearshoring2 <- nearshoring %>%
+  select(-exports_miles_dlls) %>%
+  select(where(is.numeric)) %>% 
+  select(-matches("mxn")) %>%
+  select(matches("real_real"))
+# Asegurar que solo queden numéricas
+
+# Transformar los datos a formato largo para ggplot
+nearshoring_largo <- nearshoring2 %>%
+  pivot_longer(cols = everything(), names_to = "Variable", values_to = "Valor")
+
+# Crear boxplots sin outliers con límites en el eje Y
+ggplot(nearshoring_largo, aes(x = Variable, y = Valor)) +
+  geom_boxplot(outlier.shape = NA, fill = "steelblue", color = "black") +  # Sin outliers
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  labs(title = "Boxplots de variables numéricas en nearshoring (sin outliers)", 
+       x = "Variable", 
+       y = "Valor") +
+  ylim(200, 550)
+```
+# Lista de variables a analizar
+variables_real_mxn <- c("real_mxn_intercom_acc", "real_mxn_new_fdi", "real_mxn_reinv_profits", "real_mxn_total_fdi")
+
+variables_real_mxn <- nearshoring %>%
+  rename(
+    "cuentas intercompañia FDI" = real_mxn_intercom_acc,
+    "Nueva inversion extranjera directa" = real_mxn_new_fdi,
+    "reinversión de las ganancias" = real_mxn_reinv_profits,
+    "Inversion extranjera directa total" = real_mxn_total_fdi
+  )
+# Función para generar barplot de los 10 estados con valores más altos
+crear_barplot <- function(var_name) {
+  # Agrupar por estado y calcular el promedio de la variable
+  datos_top <- nearshoring3 %>%
+    group_by(state) %>%
+    summarise(Valor_Promedio = mean(.data[[var_name]], na.rm = TRUE)) %>%
+    top_n(10, Valor_Promedio) %>%
+    arrange(desc(Valor_Promedio)) %>%
+    mutate(state_id = as.factor(state))  # Convertir en factor para evitar error
+
+  # Crear el barplot
+  ggplot(datos_top, aes(x = reorder(state, Valor_Promedio), y = Valor_Promedio, fill = state_id)) +
+    geom_bar(stat = "identity", color = "black", width = 0.6) +
+    theme_minimal() +
+    theme(
+      axis.text.x = element_text(angle = 45, hjust = 1, size = 12, face = "bold", color = "black"),
+      axis.title = element_text(size = 14, face = "bold"),
+      plot.title = element_text(size = 18, face = "bold", hjust = 0.5),
+      legend.position = "none"
+    ) +
+    labs(title = paste("Top 10 Estados -", var_name),
+         x = "Estado",
+         y = "Valor Promedio") +
+    coord_flip()
+}
+
+# Generar los 4 gráficos
+barplot_intercom_acc <- crear_barplot("cuentas intercompañia FDI")
+barplot_new_fdi <- crear_barplot("Nueva inversion extranjera directa")
+barplot_reinv_profits <- crear_barplot("reinversión de las ganancias")
+barplot_total_fdi <- crear_barplot("Inversion extranjera directa total")
+
+# Mostrar los gráficos individualmente
+print(barplot_intercom_acc)
+print(barplot_new_fdi)
+print(barplot_reinv_profits)
+print(barplot_total_fdi)
+```
 
 
 
