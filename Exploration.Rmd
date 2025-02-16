@@ -191,6 +191,13 @@ df_summary %>%
   kable_styling(bootstrap_options = c("striped", "hover", "condensed"), full_width = FALSE)
 ```
 
+
+* La **densidad de población** a lo largo de los estados y los años es muy dispersa, **cada entidad tiene características propias y distintas**, lo que puede ser importante al momento de realizar una inversión.  
+   
+* La **tasa de empleo** es encuentra muy concentrada en valores entre **0.95 - 0.98**, al tener poca dispersión siendo medida de manera general y nos puede llegar a indicar que todos **los estados se comportan de manera similar** a lo largo del tiempo.       
+     
+* La **distancia al borde fronterizo** cuenta con cierto **sesgo a la derecha**, comportamiento natural considerando que cada vez que nos alejemos de linea fronteriza habrá menos cantidad de entidades, sin embargo aquellos estados con más cercanía pudieran verse beneficiados.   
+  
 #### Nueva Inversión Extranjera
 
 ```{r N-FDI Region, echo=FALSE}
@@ -216,7 +223,6 @@ df_summary %>%
   kable(format = "html", caption = "Comportamiento de la <b>Nueva Inversión Extranjera</b> por región") %>%
   kable_styling(bootstrap_options = c("striped", "hover", "condensed"), full_width = FALSE)
 ```
-  
   
     
 ```{r N-FDI Entidad, echo=FALSE}
@@ -247,6 +253,20 @@ df_summary %>%
   kable(format = "html", caption = "Comportamiento de la <b>Nueva Inversión Extranjera</b> por Entidad") %>%
   kable_styling(bootstrap_options = c("striped", "hover", "condensed"), full_width = FALSE)
 ```
+  
+  
+* Las regiones que presentan **mayor atracción** a nuevas inversiones extranjeras son **Norte, Centro y Bajío**.  
+  
+* La **región Centro** aunque tiene la media de inversiones más alta no se puede considerar la región que recauda mayor inversión, esto debido al sesgo que se encuentra dentro de la región teniendo una **dispersión muy alta** a comparación de las demás y considerando que **el valor máximo es 10 veces el valor del percentil 75**.  
+  
+* La **región Norte** cuenta con algo de sesgo similar a la región centro solo que en menor medida, al igual esta región cuenta con una **mediana superior** a los demás teniendo **generalmente un tamaño de inversión más alto**.  
+  
+* Dentro de la región Centro se puede observar que principalmente es la **Ciudad de México**, la entidad donde se **centraliza la inversión**, teniendo también una dispersión muy alta por si misma.  
+  
+* En la región Norte se encuentra como principal protagonista la entidad de **Nuevo León**, siendo el **segundo estado con mayor inversiones nuevas al nivel federal**. Nuevo León cuenta con una menor dispersión que CDMX indicando que es **más usual ver inversiones similares** dentro del estado.  
+  
+* Dentro de las regiones, principalmente Centro y Norte, no se puede apreciar homogeneidad en la cantidad ($) de inversiones que encuentran en sus entidades federativas. La **región del Bajío** cuenta con métricas más uniformes a lo largo de los estados, lo cual podría **favorecer un crecimiento constante** a lo largo de la región.  
+  
 
 #### Actividad de Negocios
 ```{r BA Region, echo=FALSE}
@@ -301,6 +321,10 @@ df_summary %>%
   kable(format = "html", caption = "Comportamiento de la <b>Actividad de Negocio</b> por Entidad") %>%
   kable_styling(bootstrap_options = c("striped", "hover", "condensed"), full_width = FALSE)
 ```
+
+* Tanto la mediana como la media **tienden a ubicarse en valores negativos**. Esto indica que, en la mayoría de los estados, la **Actividad de negocio** está por debajo de un punto de referencia, representando un **entorno empresarial menos dinámico**.  
+  
+* Existe una dispersión considerable a nivel nacional, esto se debe a la dispersión que existe **principalmente en la región Norte** donde se encuentra y por diferencia el estado que **ha mantenido una Actividad de negocio alta a lo largo de los años**, Baja California.
 
 
 ### Visualización de los Datos
@@ -455,6 +479,7 @@ ggplot(nearshoring_clean, aes(x = patents_rate, y = sqrt(real_mxn_new_fdi))) +
        x = "Tasa de Patentes (Escala Log)", 
        y = "Raíz Cuadrada de Nueva Inversión Extranjera (MXN reales)")
 ```
+
 ##### Intensidad de Inversión Extranjera por Estado Acumulada a través de los Años
 ```{r}
 # Obtener el mapa de México con divisiones por estado
