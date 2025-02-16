@@ -18,24 +18,46 @@ knitr::include_graphics("Imagenes/Nearshoring-en-Mexico.jpg")
 
 ## Librerias
 
-```{r Librerias}
-library(dplyr)       # Manipulación y transformación de datos
-library(ggplot2)     # Visualización y gráficos
-library(reshape2)    # Reestructuración de datos (melt y cast)
-library(tidyr)       # Organización y "tidy" de datos
-library(readr)       # Lectura rápida de archivos de texto (csv, etc.)
-library(readxl)      # Importación de archivos Excel
-library(corrplot)    # Visualización de matrices de correlación
-library(rpart)       # Modelos de árboles de decisión para clasificación y regresión
-library(rpart.plot)  # Visualización de árboles de decisión
-library(stringr)     # Manipulación de cadenas de texto
-library(stringi)     # Procesamiento avanzado de cadenas (Unicode, etc.)
-library(janitor)     # Limpieza y formateo de datos
-library(lubridate)   # Manejo y manipulación de fechas y tiempos
+```{r Librerias, message=FALSE, warning=FALSE}
+# Manipulación y Transformación de Datos
+library(dplyr)       # Manipulación y transformación de datos (filter, mutate, group_by, summarise)
+library(tidyr)       # Organización y estructuración de datos en formato "tidy" (spread, gather, pivot_longer, pivot_wider)
 library(purrr)       # Programación funcional y manejo de listas
-library(knitr)       # Generación de informes y tablas en R Markdown
-library(kableExtra)  # Mejora del formato y estilo de las tablas creadas con knitr::kable
-library(plm)         # Conversión a datos panel
+library(janitor)     # Limpieza y formateo de datos (clean_names, remove_empty)
+
+# Importación y Lectura de Archivos
+library(readr)       # Lectura rápida de archivos de texto (CSV, TSV, etc.)
+library(readxl)      # Importación de archivos Excel
+
+# Visualización de Datos y Gráficos
+library(ggplot2)     # Creación de gráficos avanzados y personalizables
+library(reshape2)    # Transformación de datos en diferentes estructuras para visualización
+library(corrplot)    # Visualización de matrices de correlación
+library(rpart.plot)  # Visualización de árboles de decisión
+
+# Modelado y Análisis Estadístico
+library(rpart)       # Modelos de árboles de decisión para clasificación y regresión
+library(plm)         # Manejo de datos en formato de panel para modelos econométricos
+
+# Manipulación de Cadenas de Texto
+library(stringr)     # Manipulación de cadenas de texto (regex, detección de patrones, etc.)
+library(stringi)     # Procesamiento avanzado de cadenas (Unicode, conteo de caracteres, etc.)
+
+# Manejo de Fechas y Tiempos
+library(lubridate)   # Manipulación de fechas y tiempos en R
+
+# Generación de Informes y Tablas en R Markdown
+library(knitr)       # Creación de documentos dinámicos en R Markdown
+library(kableExtra)  # Mejora del formato y estilo de las tablas generadas con knitr::kable
+
+# Geoespacial y Mapas
+library(sf)          # Análisis y manipulación de datos espaciales en formato "Simple Features"
+library(rnaturalearth)        # Obtención de mapas geoespaciales de todo el mundo
+library(rnaturalearthdata)    # Conjunto de datos espaciales adicionales para mapas
+
+# Animaciones y Visualización Dinámica
+library(gganimate)   # Creación de animaciones en gráficos de R
+library(transformr)  # Transiciones suaves en animaciones con gganimate
 ```
 
 ## Dataset
@@ -71,7 +93,7 @@ nearshoring <- nearshoring %>%
          region_num = `region...24`)
 
 # Convert to a panel data frame with 'state' as the cross-section and 'year' as the time variable
-nearshoring <- pdata.frame(nearshoring, index = c("state", "year"))
+#nearshoring <- pdata.frame(nearshoring, index = c("state", "year"))
 
 # Verificar los cambios
 colnames(nearshoring)
@@ -93,6 +115,10 @@ nearshoring <- nearshoring %>%
   mutate(across(c(mxn_new_fdi, mxn_reinv_profits, mxn_intercom_acc, mxn_total_fdi, real_wage, mxn_exports_miles_dlls), 
                 ~ . / inpc * 100, .names = "real_{.col}"))
 
+# Convertir region_name a factor para evitar problemas con ggplot2
+nearshoring <- nearshoring %>%
+  mutate(region_name = as.factor(region_name))
+
 # Subset solo con variables reales en MXN (sin dólares)
 nearshoring_clean <- nearshoring %>%
   select(state, year, region_name, region_num, 
@@ -103,12 +129,12 @@ nearshoring_clean <- nearshoring %>%
          lq_primary, lq_secondary, lq_tertiary, patents_rate, 
          exchange_rate, inpc, border_distance, trump_election)
 
-# Verificar cambios
-
-#summary(nearshoring_clean)
-
 # Visualizar primeras filas
 head(nearshoring_clean)
+```
+
+```{r}
+summary(nearshoring_clean)
 ```
 
 
@@ -132,7 +158,6 @@ ggplot(cor_long, aes(Var1, Var2, fill = value)) +
   labs(title = "Correlation Matrix of Numeric Variables", x = "", y ="")
 
 ```
-
 
 ## Analisis Exploratorio
 
@@ -286,6 +311,124 @@ df_summary %>%
 
 #### Análisis Bivariado
 
+##### Distribución Regional de la Inversión Extranjera Directa en México
+```{r}
+# Boxplot con color diferente por región
+ggplot(nearshoring_clean, aes(x = region_name, y = real_mxn_new_fdi, fill = region_name)) +
+  geom_boxplot(color = "black") +  # Color de borde negro
+  theme_minimal() +
+  labs(title = "Distribución de la Nueva Inversión Extranjera por Región",
+       x = "Región", y = "Nueva Inversión Extranjera (MXN reales)") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  scale_fill_brewer(palette = "Set2")  # Paleta de colores más visualmente agradable
+```
+
+##### Relación entre Inversión Extranjera y Densidad Poblacional
+```{r}
+# Scatter plot entre real_mxn_new_fdi y pop_density con color de puntos según valor de lq_tertiary
+ggplot(nearshoring_clean, aes(x = pop_density, y = sqrt(real_mxn_new_fdi), color = lq_tertiary)) +
+  geom_point(alpha = 0.7) +
+  scale_x_log10() +  # Escala logarítmica para densidad poblacional
+  scale_color_gradient(low = "blue", high = "red") +
+  theme_minimal() +
+  labs(title = "Relación entre Raíz Cuadrada de Nueva Inversión Extranjera y Densidad Poblacional",
+       x = "Densidad Poblacional (Escala Log)", 
+       y = "Raíz Cuadrada de Nueva Inversión Extranjera (MXN reales)",
+       color = "LQ Sector Terciario")
+```
+
+##### Relación entre Inversión Extranjera y LQ del Sector Primario
+```{r}
+ggplot(nearshoring_clean, aes(x = lq_primary, y = real_mxn_new_fdi, color = employment)) +
+  geom_point(alpha = 0.7) +
+  scale_x_log10() +  # Escala logarítmica en el eje X
+  scale_y_log10() +  # Escala logarítmica en el eje Y
+  scale_color_gradient(low = "blue", high = "red") +  # Mapea el color según employment
+  theme_minimal() +
+  labs(title = "Relación entre Nueva Inversión Extranjera y LQ del Sector Primario",
+       x = "LQ Sector Primario (Escala Log)", 
+       y = "Nueva Inversión Extranjera (MXN reales, Escala Log)",
+       color = "Employment Rate")
+```
+
+##### Relación entre Inversión Extranjera y Tasa de Patentes
+```{r}
+# Scatter plot entre real_mxn_new_fdi y patents_rate
+ggplot(nearshoring_clean, aes(x = patents_rate, y = sqrt(real_mxn_new_fdi))) +
+  geom_point(alpha = 0.7, color = "purple") +
+  scale_x_log10() +  # Escala logarítmica en el eje X (tasa de patentes)
+  theme_minimal() +
+  labs(title = "Relación entre Raíz Cuadrada de Nueva Inversión Extranjera y Tasa de Patentes",
+       x = "Tasa de Patentes (Escala Log)", 
+       y = "Raíz Cuadrada de Nueva Inversión Extranjera (MXN reales)")
+```
+##### Intensidad de Inversión Extranjera por Estado Acumulada a través de los Años
+```{r}
+# Obtener el mapa de México con divisiones por estado
+mexico_map <- ne_states(country = "Mexico", returnclass = "sf")
+
+# Convertir nombres de estados a minúsculas y eliminar acentos
+mexico_map$name <- tolower(mexico_map$name) %>%
+  stri_trans_general("Latin-ASCII")  # Normaliza eliminando acentos (Ej. "Nuevo León" -> "Nuevo Leon")
+
+# Asegurar que year sea numérico y calcular inversión acumulativa
+nearshoring_clean_df <- nearshoring_clean %>%
+  as.data.frame() %>%
+  mutate(state = tolower(state) %>% stri_trans_general("Latin-ASCII"),  # Elimina acentos en la base de datos
+         year = as.numeric(as.character(year))) %>%
+  group_by(state, year) %>%
+  summarise(real_mxn_new_fdi = sum(real_mxn_new_fdi, na.rm = TRUE), .groups = "drop") %>%
+  arrange(state, year) %>%  # Ordenar por estado y año
+  group_by(state) %>%
+  mutate(cumulative_fdi = cumsum(real_mxn_new_fdi))  # Crear variable acumulativa
+
+# Unir datos con el mapa
+mexico_map <- mexico_map %>%
+  left_join(nearshoring_clean_df, by = c("name" = "state"))
+
+# Crear el mapa con animación acumulativa
+animated_map <- ggplot(mexico_map) +
+  geom_sf(aes(fill = cumulative_fdi), color = "black", size = 0.2) +
+  scale_fill_gradient(low = "lightyellow", high = "red", na.value = "gray80") +
+  theme_minimal() +
+  labs(title = "Evolución Acumulativa de la Inversión Extranjera en México ({closest_state})",
+       subtitle = "Valores en MXN reales (Acumulados por Año)",
+       fill = "New FDI Acumulado",
+       caption = "Fuente: Datos Nearshoring") +
+  transition_states(year, transition_length = 2, state_length = 1, wrap = FALSE) +  # Mantiene valores acumulados
+  ease_aes('linear')  # Transición lineal entre años
+
+# Guardar el GIF con mayor calidad
+anim_save("mapa_inversion_mexico_acumulado.gif", 
+          animated_map, 
+          renderer = gifski_renderer(loop = TRUE, width = 1200, height = 800),  # Aumentar resolución
+          fps = 10,   # Aumentar cuadros por segundo para mayor fluidez
+          duration = 15)  # Extender la duración para una transición más suave
+```
+
+```{r}
+# Insertar el GIF en R Markdown (solo en HTML)
+knitr::include_graphics("mapa_inversion_mexico_acumulado.gif")
+```
+
+##### Inversión extranjera por región a través del tiempo
+```{r}
+# Asegurar que year sea numérico y region_name sea factor
+nearshoring_clean_df <- nearshoring_clean %>%
+  as.data.frame() %>%
+  mutate(year = as.numeric(as.character(year)), 
+         region_name = as.factor(region_name))
+
+# Graficar la inversión extranjera por región con barras apiladas
+ggplot(nearshoring_clean_df, aes(x = factor(year), y = real_mxn_new_fdi, fill = region_name)) +
+  geom_bar(stat = "identity", position = "stack") +  # Barras apiladas
+  theme_minimal() +
+  labs(title = "Distribución de la Inversión Extranjera Directa por Región",
+       x = "Año", 
+       y = "Nueva Inversión Extranjera (MXN reales, Escala Log)",
+       fill = "Región") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
 
 
 ## Hallazgos
