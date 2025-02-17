@@ -775,7 +775,16 @@ ggplot(nearshoring_clean_df, aes(x = factor(year), y = real_mxn_new_fdi, fill = 
 
 Estos hallazgos proporcionan una base sólida para ajustar modelos predictivos y entender los determinantes clave de la inversión extranjera en México.
 
-## Hypothesis Generales 
+## Hypothesis Generales
+
+1. **Las regiones con menor desarrollo industrial y diversificación económica atraen menos inversión extranjera.**  
+   - Estados como **Oaxaca, Guerrero, Nayarit y Sinaloa** muestran consistentemente bajos niveles de inversión, lo que sugiere que la falta de infraestructura y la dependencia de sectores primarios limitan su competitividad en el nearshoring.  
+   
+2. **La proximidad a EE.UU. y la integración en cadenas de suministro globales favorecen la atracción de inversión.**  
+   - Estados en el **norte y bajío**, como **Nuevo León, Chihuahua y Guanajuato**, presentan mayor captación de capital extranjero, lo que indica que la cercanía a los mercados de destino y la presencia de clústeres industriales juegan un papel clave en las decisiones de inversión.  
+
+3. **La inversión en nearshoring se correlaciona con la infraestructura logística y conectividad.**  
+   - Estados con **mejor acceso a puertos, carreteras y redes ferroviarias** reciben mayores flujos de inversión, lo que sugiere que la eficiencia en logística es un factor determinante en la reubicación de operaciones extranjeras.  
 
 
 ## Referencias
