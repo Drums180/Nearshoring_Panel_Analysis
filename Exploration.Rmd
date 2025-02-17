@@ -148,7 +148,7 @@ nearshoring <- nearshoring %>%
 colnames(nearshoring)
 ```
 
-## Overview and Adjustments
+## Descripción General y Ajustes
 
 #### Transformación de Variables
 b. Crear y/o transformar variables (e.g., variables nominales, variables reales, variables ponderadas, etc.)
@@ -774,7 +774,7 @@ ggplot(nearshoring_clean_df, aes(x = factor(year), y = real_mxn_new_fdi, fill = 
 
 Estos hallazgos proporcionan una base sólida para ajustar modelos predictivos y entender los determinantes clave de la inversión extranjera en México.
 
-## Hypothesis Generales
+## Hipótesis Generales
 
 1. **Las regiones con menor desarrollo industrial y diversificación económica atraen menos inversión extranjera.**  
    - Estados como **Oaxaca, Guerrero, Nayarit y Sinaloa** muestran consistentemente bajos niveles de inversión, lo que sugiere que la falta de infraestructura y la dependencia de sectores primarios limitan su competitividad en el nearshoring.  
