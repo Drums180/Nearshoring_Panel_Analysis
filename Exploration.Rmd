@@ -458,13 +458,12 @@ ggplot(nearshoring_largo, aes(x = Variable, y = Valor, fill = Variable)) +
 ##### Salarios por Region contra Nueva Inversión
 ```{r}
 # Crear boxplots con colores por región
-ggplot(nearshoring_clean, aes(x = real_wage, y = real_mxn_new_fdi, fill = region_name)) +
+ggplot(nearshoring_clean, aes(x = region_name, y = real_wage, fill = region_name)) +
   geom_boxplot(color = "black") +  
   theme_minimal() +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
   labs(title = "Boxplots de salario en nearshoring por región", 
-       x = "Variable", 
-       y = "Valor", 
+       x = "Región", 
+       y = "Salario real (MXN)",
        fill = "Región") +
   ylim(200, 550) +
   scale_fill_brewer(palette = "Set3")  # Paleta de colores para diferenciar regiones
