@@ -415,11 +415,11 @@ ggplot(nearshoring_largo, aes(x = Variable, y = Valor)) +
   ylim(200, 550)
 ```
 
-```{r eval=FALSE, include=FALSE}
+```{r}
 # Lista de variables a analizar
 variables_real_mxn <- c("real_mxn_intercom_acc", "real_mxn_new_fdi", "real_mxn_reinv_profits", "real_mxn_total_fdi")
 
-variables_real_mxn <- nearshoring %>%
+nearshoring3 <- nearshoring %>%
   rename(
     "cuentas intercompañia FDI" = real_mxn_intercom_acc,
     "Nueva inversion extranjera directa" = real_mxn_new_fdi,
