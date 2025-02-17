@@ -23,20 +23,34 @@ El análisis se basa en modelos de regresión de datos panel para estimar la inf
 - **Modelos de efectos aleatorios** cuando se asume que las diferencias entre entidades no están correlacionadas con las variables explicativas.  
 - **Técnicas de clustering y visualización** para agrupar entidades según su atractivo nearshoring.  
 
-## ⚡ Principales Variables  
+## ⚡ Dataset  
 
-Las variables clave utilizadas incluyen:  
+Este análisis utiliza un conjunto de datos estructurado en **panel data** con información relevante sobre el impacto del nearshoring en México a nivel estatal.  
 
-### 📈 Variables dependientes:  
-- **Flujo de IED en sectores clave** (millones de dólares).  
-- **Número de nuevas plantas industriales** en cada entidad.  
+### 📖 Glosario de Variables  
 
-### 📊 Variables independientes:  
-- **Costo logístico y tiempos de entrega** en comparación con otros países.  
-- **Exportaciones manufactureras hacia EE.UU.** (volumen y valor).  
-- **Disponibilidad de mano de obra calificada** y nivel salarial.  
-- **Infraestructura industrial** (parques industriales, acceso a insumos energéticos).  
+#### 📈 Variables dependientes:  
+- **new_fdi:** Ingresos de Nueva Inversión Extranjera Directa (IED). Millones de dólares.  
+- **reinv_profits:** Reinversión de utilidades – Flujos de IED. Millones de dólares.  
+- **intercom_acc:** Cuentas intercompañía – Flujos de IED. Millones de dólares.  
+- **total_fdi:** Total de flujos de Inversión Extranjera Directa. Millones de dólares.  
 
+#### 📊 Variables independientes:  
+- **crime_rate:** Tasa de criminalidad por cada 100,000 habitantes del estado.  
+- **unemployment:** Porcentaje de población desempleada.  
+- **employment:** Porcentaje de población empleada.  
+- **business_activity:** Índice de actividad económica ponderado por la distancia del estado al puerto de entrada más cercano en EE.UU.  
+- **real_wage:** Salario real ajustado usando el INPC 2018 = 100. Pesos mexicanos.  
+- **pop_density:** Densidad de población por km² del estado.  
+- **good_governance:** Relación entre la inversión pública del estado y su deuda pública.  
+- **ratio_public_investment:** Relación entre la inversión pública del estado y su Producto Interno Bruto (PIB).  
+- **lq_primary:** Cociente de localización de personas empleadas en la industria primaria.  
+- **lq_secondary:** Cociente de localización de personas empleadas en el sector secundario.  
+- **lq_tertiary:** Cociente de localización de personas empleadas en el sector terciario.  
+- **exchange_rate:** Tipo de cambio – Pesos MXN por 1 USD.  
+- **patents_rate:** Número de patentes de I+D por cada 100,000 habitantes del estado.  
+- **inpc:** Índice Nacional de Precios al Consumidor (INPC). Base 2018 = 100.
+  
 ## 🚀 Cómo Usar el Código  
 
 1. **Clonar el repositorio:**  
