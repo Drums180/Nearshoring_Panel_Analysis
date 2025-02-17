@@ -1,12 +1,22 @@
 ---
 title: "Nearshoring en México: Análisis Exploratorio"
-author: "David Dominguez - Arturo Silva"
-date: "`r Sys.Date()`"
+author: |
+  **David Domínguez**  
+  **Arturo Silva**  
+  **Luis González**  
+  **Alberto Valiente**  
+  **André Ramírez**  
+  **Bruno Díaz**
+date: "`r format(Sys.Date(), '%B %d, %Y')`"
 output: 
   html_document:
     toc: true
     toc_float: true
+    fig_caption: true
+    theme: readable
+    highlight: tango
 ---
+
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(warning = FALSE, message = FALSE)
 ```
@@ -101,7 +111,7 @@ library(transformr)  # Transiciones suaves en animaciones con gganimate
 
 ## Dataset
 
-### Glosario:
+#### Glosario:
 * **new_fdi:**	New Foreign Direct Investment Inflows. Millions of Dollars.  
 * **reinv_profits:**	Reinvestment of Profits - Foreign Direct Investment Inflows. Millions of Dollars.  
 * **intercom_acc:**	Intercompany Accounts - Foreign Direct Investment Inflows. Millions of Dollars.  
@@ -140,6 +150,7 @@ colnames(nearshoring)
 
 ## Overview and Adjustments
 
+#### Transformación de Variables
 b. Crear y/o transformar variables (e.g., variables nominales, variables reales, variables ponderadas, etc.)
 
 ```{r Modifications, message=FALSE, warning=FALSE}
@@ -172,11 +183,12 @@ nearshoring_clean <- nearshoring %>%
 head(nearshoring_clean)
 ```
 
+#### Comportamiento de Variables
 ```{r}
 summary(nearshoring_clean)
 ```
 
-
+#### Matriz de Correlación
 ```{r}
 nearshoring_numeric <- nearshoring_clean[, !names(nearshoring_clean) %in% c("real_wage", "total_fdi","intercom_acc","reinv_profits","new_fdi","total_fdi", "mxn_total_fdi","mxn_intercom_acc","mxn_reinv_profit","mxn_new_fdi")]
 
@@ -239,6 +251,7 @@ df_summary %>%
   
 #### Nueva Inversión Extranjera
 
+##### Comportamiento por Region
 ```{r N-FDI Region, echo=FALSE}
 # Generación de estadísticas por Región
 df_summary <- nearshoring_clean %>%
@@ -263,7 +276,7 @@ df_summary %>%
   kable_styling(bootstrap_options = c("striped", "hover", "condensed"), full_width = FALSE)
 ```
   
-    
+##### Comportamiento por Entidad
 ```{r N-FDI Entidad, echo=FALSE}
 df_estadisticas <- nearshoring_clean %>%
   filter(region_name %in% c("Bajio", "Centro","Norte"))
@@ -293,7 +306,6 @@ df_summary %>%
   kable_styling(bootstrap_options = c("striped", "hover", "condensed"), full_width = FALSE)
 ```
   
-  
 * Las regiones que presentan **mayor atracción** a nuevas inversiones extranjeras son **Norte, Centro y Bajío**.  
   
 * La **región Centro** aunque tiene la media de inversiones más alta no se puede considerar la región que recauda mayor inversión, esto debido al sesgo que se encuentra dentro de la región teniendo una **dispersión muy alta** a comparación de las demás y considerando que **el valor máximo es 10 veces el valor del percentil 75**.  
@@ -308,6 +320,8 @@ df_summary %>%
   
 
 #### Actividad de Negocios
+
+##### Comportamiento por Región
 ```{r BA Region, echo=FALSE}
 # Generación de estadísticas por Región
 df_summary <- nearshoring_clean %>%
@@ -331,8 +345,9 @@ df_summary %>%
   kable(format = "html", caption = "Comportamiento de la <b>Actividad de Negocio</b> por región") %>%
   kable_styling(bootstrap_options = c("striped", "hover", "condensed"), full_width = FALSE)
 ```
-  
-```{r BA Entidad, echo=FALSE}
+
+##### Comportamiento por Entidad
+```{r BA Entidad, echo=FALSE, message=FALSE, warning=FALSE}
 df_estadisticas <- nearshoring_clean %>%
   filter(region_name %in% c("Bajio", "Centro","Norte"))
 
@@ -366,55 +381,110 @@ df_summary %>%
 * Existe una dispersión considerable a nivel nacional, esto se debe a la dispersión que existe **principalmente en la región Norte** donde se encuentra y por diferencia el estado que **ha mantenido una Actividad de negocio alta a lo largo de los años**, Baja California.
 
 
-### Visualización de los Datos
+## Visualización de los Datos
 
-#### Análisis Univariado
+### Análisis Univariado
+
+##### Histograma para Variables Numericas
 ```{r}
-#Quitamos exports por que sus datos opacan los de mas graficos
-nearshoring2 <- nearshoring %>%
-  select(-exports_miles_dlls) %>%
+# Filtrar solo las columnas numéricas y eliminar 'year' y 'trump_election'
+nearshoring_numeric <- nearshoring_clean %>%
+  select(where(is.numeric)) %>%
+  select(-year, -trump_election, -region_num)
+
+# Convertir a formato largo
+nearshoring_numeric_long <- nearshoring_numeric %>%
+  pivot_longer(cols = everything(), names_to = "Variable", values_to = "Valor")
+
+# Obtener lista de variables en grupos de 4
+variables <- unique(nearshoring_numeric_long$Variable)
+num_groups <- ceiling(length(variables) / 4)  # Número de grupos de 4
+
+# Generar histogramas en grupos de 4
+for (i in seq(1, length(variables), by = 4)) {
+  vars_subset <- variables[i:min(i+3, length(variables))]  # Seleccionar grupo de 4 variables
+  
+  plot <- ggplot(nearshoring_numeric_long %>% filter(Variable %in% vars_subset), aes(x = Valor)) +
+    geom_histogram(bins = 30, fill = "steelblue", color = "black", alpha = 0.7) +
+    facet_wrap(~Variable, scales = "free", ncol = 2) +  # Agrupar en 2 columnas
+    theme_minimal() +
+    labs(title = paste("Distribución de Variables"),
+         x = "Valor",
+         y = "Frecuencia") +
+    theme(strip.text = element_text(face = "bold", size = 12),
+          plot.title = element_text(hjust = 0.5, face = "bold", size = 14))
+  
+  print(plot)  # Mostrar gráfico
+}
+```
+
+- La mayoría de las variables presentan **sesgo a la derecha**, indicando que hay pocos valores extremadamente altos y muchos valores bajos, lo que sugiere la necesidad de **transformaciones como exponente o logaritmo** para mejorar la linealidad en los modelos.
+
+- Los coeficientes de localización sectorial (*LQ primary, LQ secondary, LQ tertiary*) tienen distribuciones más cercanas a normales, aunque *LQ secondary* presenta **bimodalidad**, lo que podría reflejar la presencia de dos tipos de regiones con dinámicas industriales diferentes.
+
+- Algunas variables, como *patents_rate*, muestran **distribuciones con múltiples picos o poca variabilidad**, lo que puede afectar su capacidad predictiva en modelos de regresión si no se maneja adecuadamente.
+
+##### Variables Numericas contra Nueva Inversión
+```{r}
+# Quitamos exports porque sus datos opacan los de más gráficos
+nearshoring2 <- nearshoring_clean %>%
+  select(-real_mxn_exports_miles_dlls) %>%
   select(where(is.numeric)) %>% 
   select(matches("real_mxn"))
-# Asegurar que solo queden numéricas
 
 # Transformar los datos a formato largo para ggplot
 nearshoring_largo <- nearshoring2 %>%
   pivot_longer(cols = everything(), names_to = "Variable", values_to = "Valor")
 
-# Crear boxplots sin outliers con límites en el eje Y
-ggplot(nearshoring_largo, aes(x = Variable, y = Valor)) +
-  geom_boxplot(outlier.shape = NA, fill = "steelblue", color = "black") +  # Sin outliers
+# Crear boxplots sin outliers con diferentes colores por variable
+ggplot(nearshoring_largo, aes(x = Variable, y = Valor, fill = Variable)) +
+  geom_boxplot(outliers = FALSE,color = "black") +  
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
   labs(title = "Boxplots de variables numéricas en nearshoring (sin outliers)", 
        x = "Variable", 
        y = "Valor") +
-  ylim(-10000, 35000)
+  scale_fill_brewer(palette = "Set3")
 ```
+
+- La variable **real_mxn_intercom_acc** presenta una gran cantidad de valores cercanos a cero, lo que indica que la mayoría de las entidades tienen bajos niveles de esta métrica, con **algunas excepciones que presentan valores significativamente más altos**.
+
+- **real_mxn_new_fdi** muestra un comportamiento similar con una mediana baja y un rango intercuartil pequeño, lo que sugiere que la mayoría de las inversiones nuevas son relativamente pequeñas en comparación con algunos valores atípicos que pueden corresponder a **entidades que han recibido inversiones extranjeras significativamente mayores**.
+
+- La variable **real_mxn_reinv_profits** tiene una dispersión ligeramente menor, lo que indica que **las ganancias reinvertidas muestran una menor variabilidad** entre las entidades en comparación con las inversiones nuevas.
+
+- **real_mxn_total_fdi** tiene la mayor dispersión entre todas las variables y muestra **una gran cantidad de valores atípicos**, lo que sugiere que **algunas entidades reciben montos muy altos de inversión extranjera directa en comparación con el resto**. Esto podría indicar una **desigual distribución de la inversión** en el país.
+
+##### Salarios por Region contra Nueva Inversión
 ```{r}
-#Quitamos exports por que sus datos opacan los de mas graficos
-nearshoring2 <- nearshoring %>%
-  select(-exports_miles_dlls) %>%
-  select(where(is.numeric)) %>% 
-  select(-matches("mxn")) %>%
-  select(matches("real_real"))
-# Asegurar que solo queden numéricas
-
-# Transformar los datos a formato largo para ggplot
-nearshoring_largo <- nearshoring2 %>%
-  pivot_longer(cols = everything(), names_to = "Variable", values_to = "Valor")
-
-# Crear boxplots sin outliers con límites en el eje Y
-ggplot(nearshoring_largo, aes(x = Variable, y = Valor)) +
-  geom_boxplot(outlier.shape = NA, fill = "steelblue", color = "black") +  # Sin outliers
+# Crear boxplots con colores por región
+ggplot(nearshoring_clean, aes(x = real_wage, y = real_mxn_new_fdi, fill = region_name)) +
+  geom_boxplot(color = "black") +  
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-  labs(title = "Boxplots de variables numéricas en nearshoring (sin outliers)", 
+  labs(title = "Boxplots de salario en nearshoring por región", 
        x = "Variable", 
-       y = "Valor") +
-  ylim(200, 550)
+       y = "Valor", 
+       fill = "Región") +
+  ylim(200, 550) +
+  scale_fill_brewer(palette = "Set3")  # Paleta de colores para diferenciar regiones
 ```
 
+- Se observa que **las regiones tienen distribuciones diferenciadas en las variables analizadas**, lo que sugiere que el impacto del nearshoring puede variar significativamente según la zona geográfica.
+
+- La **región Norte** presenta valores consistentemente más altos en comparación con otras regiones, lo que indica que esta zona podría estar capturando una mayor proporción de la actividad económica relacionada con el nearshoring.
+
+- La **región Centro** muestra una mayor dispersión en los valores, lo que sugiere que hay estados con niveles muy variados de inversión y actividad, probablemente debido a la presencia de estados con dinámicas económicas distintas dentro de la misma región.
+
+- La **región Bajío** también presenta valores elevados, aunque con una dispersión más controlada, lo que podría indicar que esta zona tiene una distribución más homogénea de los beneficios del nearshoring.
+
+- La **región Sur** tiende a mostrar valores más bajos en comparación con las demás regiones, lo que sugiere que esta zona podría estar menos integrada en las estrategias de nearshoring o enfrentando más barreras para atraer inversiones.
+
+- La **región Occidente** muestra una distribución intermedia, con valores que no alcanzan los niveles del Norte o Bajío, pero que tampoco presentan la baja dispersión del Sur.
+
+Estos patrones pueden ser clave para diseñar estrategias de inversión diferenciadas según la región.
+
+##### Tipos de Inversión Extranjera por Entidad
 ```{r}
 # Lista de variables a analizar
 variables_real_mxn <- c("real_mxn_intercom_acc", "real_mxn_new_fdi", "real_mxn_reinv_profits", "real_mxn_total_fdi")
@@ -465,21 +535,58 @@ print(barplot_reinv_profits)
 print(barplot_total_fdi)
 ```
 
+- **Chihuahua, Ciudad de México y Baja California** lideran en cuentas intercompañía de FDI, lo que sugiere que estas entidades tienen un fuerte ecosistema empresarial con múltiples filiales y conexiones globales.
 
+- En términos de **nueva inversión extranjera directa**, **Ciudad de México es el principal receptor**, con un monto significativamente superior al de otros estados, lo que reafirma su papel como el centro económico y financiero más importante del país.
 
-#### Análisis Bivariado
+- **Nuevo León, Estado de México y Jalisco** también reciben altos niveles de nueva inversión extranjera, consolidándose como hubs industriales clave en el país.
+
+- **La reinversión de ganancias sigue una tendencia similar**, con Ciudad de México nuevamente a la cabeza, lo que sugiere que las empresas ya establecidas en la capital están reinvirtiendo más capital en comparación con otros estados.
+
+- **Nuevo León, Jalisco y Guanajuato** también presentan altos niveles de reinversión, lo que refleja la confianza de las empresas en estas entidades como destinos estratégicos para mantener operaciones.
+
+- En la **Inversión Extranjera Directa Total**, Ciudad de México domina nuevamente el ranking, superando por un amplio margen a los demás estados, seguida por **Nuevo León, Estado de México y Jalisco**.
+
+- **Chihuahua y Baja California** se destacan dentro de la región norte, lo que puede estar relacionado con su proximidad a la frontera con EE.UU. y su participación en la industria manufacturera.
+
+- **Querétaro, Guanajuato y Coahuila** aparecen recurrentemente en las listas, consolidándose como estados clave en el nearshoring y en la atracción de inversiones en manufactura y tecnología.
+
+Estos patrones reflejan cómo la inversión extranjera se concentra en ciertas entidades con ventajas estratégicas, como acceso a mercados globales, infraestructura industrial y estabilidad económica.
+
+### Análisis Bivariado
 
 ##### Distribución Regional de la Inversión Extranjera Directa en México
 ```{r}
-# Boxplot con color diferente por región
+# Calcular porcentaje de datos por región
+nearshoring_summary <- nearshoring_clean %>%
+  group_by(region_name) %>%
+  summarise(count = n()) %>%
+  mutate(percentage = (count / sum(count)) * 100)
+
+# Crear el boxplot con etiquetas de porcentaje
 ggplot(nearshoring_clean, aes(x = region_name, y = real_mxn_new_fdi, fill = region_name)) +
   geom_boxplot(color = "black") +  # Color de borde negro
   theme_minimal() +
   labs(title = "Distribución de la Nueva Inversión Extranjera por Región",
        x = "Región", y = "Nueva Inversión Extranjera (MXN reales)") +
   theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-  scale_fill_brewer(palette = "Set2")  # Paleta de colores más visualmente agradable
+  scale_fill_brewer(palette = "Set2") +  # Paleta de colores más visualmente agradable
+  geom_text(data = nearshoring_summary, aes(x = region_name, y = max(nearshoring_clean$real_mxn_new_fdi, na.rm = TRUE) * 1.05, label = paste0(round(percentage, 1), "%")), size = 4, fontface = "bold", vjust = 0, color = "black")  # Ajuste para que el texto esté arriba
 ```
+
+- **Las regiones Sur (25%) y Occidente (21.9%) tienen la mayor cantidad de datos en la muestra, pero con inversiones bajas y comprimidas**.  
+  - Aunque estas regiones representan la mayor cantidad de observaciones en los datos, **sus valores de inversión extranjera directa están fuertemente concentrados en montos bajos**.  
+  - Esto sugiere que **el Sur y Occidente no son destinos estratégicos para el nearshoring**, ya que no están atrayendo inversiones de gran magnitud.  
+  - **Posibles razones** incluyen menor infraestructura industrial, mayor distancia con EE.UU., menos desarrollo en sectores manufactureros y posibles barreras logísticas o regulatorias.
+
+- **El Centro (18.8%) y el Norte (18.8%) tienen menos datos en la muestra, pero con inversiones más dispersas y de mayor magnitud**.  
+  - **El Centro muestra una gran dispersión en la inversión**, lo que indica que algunas entidades, como la Ciudad de México y otros polos industriales, reciben inversiones significativamente mayores.  
+  - **El Norte también presenta una mayor variabilidad en la inversión**, lo que sugiere que esta región sigue siendo un destino clave para nearshoring, con estados que captan proyectos estratégicos de manufactura y logística.
+
+- **El Bajío (15.6%) tiene la menor cantidad de datos, pero su inversión es más estable y homogénea**.  
+  - Aunque representa una menor proporción de la muestra, **la inversión extranjera en el Bajío muestra menor dispersión y valores más consistentes**, lo que indica una captación de nearshoring más estructurada y constante.  
+  - Esto es consistente con la especialización de la región en **sectores como automotriz y aeroespacial**, que han sido pilares clave del nearshoring en México.
+
 
 ##### Relación entre Inversión Extranjera y Densidad Poblacional
 ```{r}
@@ -495,9 +602,15 @@ ggplot(nearshoring_clean, aes(x = pop_density, y = sqrt(real_mxn_new_fdi), color
        color = "LQ Sector Terciario")
 ```
 
+- **Las ciudades más densamente pobladas concentran mayores inversiones**, aunque la densidad por sí sola no parece ser un factor determinante.  
+
+- **El sector terciario juega un papel clave**: los estados con altos montos y alta densidad parecen tener altos niveles de especialización en servicios (LQ > 1.2) en común.  
+
+- **Las áreas con baja densidad y menor desarrollo en servicios tienen dificultades para atraer inversión**, sugiriendo que otros factores como infraestructura e incentivos fiscales pueden ser más relevantes.  
+
 ##### Relación entre Inversión Extranjera y LQ del Sector Primario
 ```{r}
-ggplot(nearshoring_clean, aes(x = lq_primary, y = real_mxn_new_fdi, color = employment)) +
+ggplot(nearshoring_clean, aes(x = lq_primary, y = sqrt(real_mxn_new_fdi), color = employment)) +
   geom_point(alpha = 0.7) +
   scale_x_log10() +  # Escala logarítmica en el eje X
   scale_y_log10() +  # Escala logarítmica en el eje Y
@@ -505,39 +618,56 @@ ggplot(nearshoring_clean, aes(x = lq_primary, y = real_mxn_new_fdi, color = empl
   theme_minimal() +
   labs(title = "Relación entre Nueva Inversión Extranjera y LQ del Sector Primario",
        x = "LQ Sector Primario (Escala Log)", 
-       y = "Nueva Inversión Extranjera (MXN reales, Escala Log)",
+       y = "Raiz de Nueva Inversión Extranjera (MXN reales, Escala Log)",
        color = "Employment Rate")
 ```
+
+- **Las regiones con alta especialización en el sector primario (LQ > 1) tienden a recibir menos inversión extranjera**, lo que sugiere que este sector no es un motor clave para atraer capital externo.  
+
+- **Los valores más altos de inversión están concentrados en zonas con menor presencia del sector primario**, indicando que las inversiones se dirigen a economías más diversificadas o con mayor industrialización.  
+
+- **El empleo general es alto en casi todas las observaciones**, pero no parece estar relacionado con la inversión ni con la especialización en el sector primario, lo cual es congruente con el analisis de estadisticos descriptivo  
 
 ##### Relación entre Inversión Extranjera y Tasa de Patentes
 ```{r}
 # Scatter plot entre real_mxn_new_fdi y patents_rate
 ggplot(nearshoring_clean, aes(x = patents_rate, y = sqrt(real_mxn_new_fdi))) +
   geom_point(alpha = 0.7, color = "purple") +
-  scale_x_log10() +  # Escala logarítmica en el eje X (tasa de patentes)
+  #scale_y_log10() +  
+  scale_x_log10() + # Escala logarítmica en el eje X (tasa de patentes)
   theme_minimal() +
   labs(title = "Relación entre Raíz Cuadrada de Nueva Inversión Extranjera y Tasa de Patentes",
        x = "Tasa de Patentes (Escala Log)", 
        y = "Raíz Cuadrada de Nueva Inversión Extranjera (MXN reales)")
 ```
 
+- **No hay una relación lineal tan marcada entre la tasa de patentes y la inversión extranjera**, lo que sugiere que la innovación no es el principal factor para atraer capital.  
+
+- **Las inversiones altas se observan tanto en regiones con pocas como con muchas patentes**, aunque cabe mencionar que parecen ser más frecuentes en valores altos de tasa de patente.  
+
+- **Las regiones con mayor innovación pueden captar inversión, pero no de manera sistemática**, lo que sugiere que la investigación y el desarrollo deben ir acompañados de otras condiciones para atraer capital extranjero.  
+
 ##### Intensidad de Inversión Extranjera por Estado Acumulada a través de los Años
 ```{r}
 # Obtener el mapa de México con divisiones por estado
 mexico_map <- ne_states(country = "Mexico", returnclass = "sf")
 
-# Convertir nombres de estados a minúsculas y eliminar acentos
-mexico_map$name <- tolower(mexico_map$name) %>%
-  stri_trans_general("Latin-ASCII")  # Normaliza eliminando acentos (Ej. "Nuevo León" -> "Nuevo Leon")
+# Normalizar nombres: convertir a minúsculas, eliminar acentos, y renombrar Distrito Federal a Ciudad de Mexico
+mexico_map$name <- mexico_map$name %>%
+  tolower() %>%
+  stri_trans_general("Latin-ASCII") %>%
+  str_replace_all("distrito federal", "ciudad de mexico")  # Cambiar Distrito Federal a Ciudad de Mexico
 
 # Asegurar que year sea numérico y calcular inversión acumulativa
 nearshoring_clean_df <- nearshoring_clean %>%
   as.data.frame() %>%
-  mutate(state = tolower(state) %>% stri_trans_general("Latin-ASCII"),  # Elimina acentos en la base de datos
+  mutate(state = tolower(state) %>% 
+           stri_trans_general("Latin-ASCII") %>%
+           str_replace_all("ciudad de mexico", "ciudad de mexico"),  # Asegurar consistencia en el nombre
          year = as.numeric(as.character(year))) %>%
   group_by(state, year) %>%
   summarise(real_mxn_new_fdi = sum(real_mxn_new_fdi, na.rm = TRUE), .groups = "drop") %>%
-  arrange(state, year) %>%  # Ordenar por estado y año
+  arrange(state, year) %>%
   group_by(state) %>%
   mutate(cumulative_fdi = cumsum(real_mxn_new_fdi))  # Crear variable acumulativa
 
@@ -558,17 +688,23 @@ animated_map <- ggplot(mexico_map) +
   ease_aes('linear')  # Transición lineal entre años
 
 # Guardar el GIF con mayor calidad
-anim_save("mapa_inversion_mexico_acumulado.gif", 
-          animated_map, 
-          renderer = gifski_renderer(loop = TRUE, width = 1200, height = 800),  # Aumentar resolución
-          fps = 10,   # Aumentar cuadros por segundo para mayor fluidez
-          duration = 15)  # Extender la duración para una transición más suave
+# anim_save("mapa_inversion_mexico_acumulado.gif", 
+          # animated_map, 
+          # renderer = gifski_renderer(loop = TRUE, width = 1200, height = 800),  # Aumentar resolución
+          # fps = 10,   # Aumentar cuadros por segundo para mayor fluidez
+          # duration = 15)  # Extender la duración para una transición más suave
 ```
 
 ```{r}
 # Insertar el GIF en R Markdown (solo en HTML)
 knitr::include_graphics("mapa_inversion_mexico_acumulado.gif")
 ```
+
+- **CDMX, Nuevo León y Jalisco lideraron el crecimiento de inversión extranjera desde el inicio**, con patrones de crecimiento exponencial, lo que sugiere que han sido los principales hubs de inversión.  
+
+- **Estados del sur y occidente, como Nayarit, Sinaloa, Oaxaca y Guerrero, han mantenido valores bajos a lo largo del tiempo**, reforzando la tendencia de menor atractivo en estas regiones.  
+
+- **Después de 2020, algunos estados como Zacatecas y San Luis Potosí muestran un crecimiento acelerado**, principalmente aquellos cercanos a la frontera con EE.UU. o en el centro-norte, lo que podría estar relacionado con cambios en políticas económicas o estrategias de relocalización que benefician la tendencia de nearshoring en los últimos años.  
 
 ##### Inversión extranjera por región a través del tiempo
 ```{r}
@@ -589,24 +725,67 @@ ggplot(nearshoring_clean_df, aes(x = factor(year), y = real_mxn_new_fdi, fill = 
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
 
+- **A diferencia del mapa acumulado, este gráfico muestra fluctuaciones anuales en la inversión**, destacando que los picos de inversión no siempre reflejan un crecimiento sostenido.  
+
+- **La inversión cayó drásticamente en 2020, posiblemente debido a la pandemia**, pero se recuperó rápidamente en 2021, aunque sin una tendencia clara de crecimiento a largo plazo.  
+
+- **No hay un incremento sistemático de nueva inversión con el tiempo**, lo que sugiere que la llegada de capital extranjero responde más a eventos específicos y condiciones económicas globales que a un crecimiento estructural del país.  
 
 ## Hallazgos
 
+#### 1. **Concentración de la Inversión en Hubs Industriales**
+   - **Ciudad de México, Nuevo León y Jalisco** lideran la atracción de inversión extranjera, destacándose como los principales receptores a lo largo del tiempo.  
+   - **Factores clave:** infraestructura, acceso a mercados, ecosistemas empresariales consolidados y cercanía a EE.UU. en el caso del norte.
+
+#### 2. **Regiones con Baja Atracción de Inversión**
+   - **Sur y occidente (Oaxaca, Guerrero, Nayarit, Sinaloa)** presentan inversiones persistentemente bajas.  
+   - **Posibles razones:** menor desarrollo industrial, infraestructura limitada, y menor integración en cadenas de suministro globales.
+
+#### 3. **Crecimiento Acelerado en el Centro-Norte Después de 2020**
+   - **Estados como Zacatecas y San Luis Potosí han incrementado su inversión reciente**, probablemente debido a incentivos económicos y la reconfiguración de cadenas de suministro hacia EE.UU.  
+   - Indicio de **nuevas oportunidades de nearshoring** fuera de los hubs tradicionales.
+
+#### 4. **Impacto de la Pandemia en la Inversión**
+   - **Caída drástica en 2020**, seguida de una **rápida recuperación en 2021**.  
+   - No se observa una tendencia clara de crecimiento sostenido, lo que sugiere que la inversión responde a **eventos externos más que a una expansión estructural**.
+
+#### 5. **Transformaciones Clave para el Modelado**
+   - Aplicar la **raíz cuadrada de "New FDI"** mejoró la representación de la variable respuesta, reduciendo la influencia de outliers y permitiendo **mejores relaciones lineales**.  
+   - Variables como **densidad poblacional y tasa de patentes** se interpretaron mejor en **escala logarítmica**.
+
+#### 6. **Sector Económico y Atracción de Inversión**
+   - **Estados con alta presencia del sector terciario y manufacturero captan más inversión**, mientras que aquellos especializados en el sector primario tienen menor atracción.  
+   - Implicación: **La diversificación económica es clave para la competitividad en inversión extranjera**.
+
+#### 7. **Proximidad a EE.UU. como Factor Clave**
+   - **Estados fronterizos como Baja California y Chihuahua** han mantenido una inversión constante a lo largo del tiempo.  
+   - La **cercanía geográfica sigue siendo un factor determinante** en la atracción de capital extranjero.
+
+#### 8. **Innovación y su Relación con la Inversión**
+   - **No hay una relación clara entre la tasa de patentes y la inversión extranjera**.  
+   - Indica que la **innovación por sí sola no es suficiente** para atraer capital sin otros incentivos como infraestructura y políticas fiscales.
+
+#### 9. **Fluctuaciones en la Inversión Anual**
+   - La inversión no sigue un **patrón de crecimiento sostenido**, sino que varía por eventos específicos.  
+   - Refuerza la idea de que **la inversión extranjera en México es altamente dependiente de factores coyunturales** como tratados comerciales o crisis económicas.
+
+#### 10. **Diferencias en la Distribución Regional de Inversión**
+   - **Regiones con mayor volumen de datos (Sur y Occidente) tienen inversiones bajas y comprimidas**.  
+   - **Centro y Norte tienen inversiones más dispersas y de mayor magnitud**, destacando como los destinos más atractivos para el capital extranjero.
+
+Estos hallazgos proporcionan una base sólida para ajustar modelos predictivos y entender los determinantes clave de la inversión extranjera en México.
+
+## Hypothesis Generales 
 
 
 ## Referencias
 
-**Deloitte. (2020).** Global Supply Chain and Network Transformation: A Strategy for the Future. Deloitte Insights.  
-This report discusses the role of predictive analytics in optimizing supply chains and nearshoring strategies.    
-  
-**McKinsey & Company. (2022).** Nearshoring: A Solution for U.S. Supply Chain Vulnerabilities. McKinsey Insights.  
-McKinsey analyzes how predictive analytics and nearshoring are transforming U.S. supply chains.  
-  
-**The Economist. (2022).** The Rise of Nearshoring in Mexico.  
-This article explores how Mexico is emerging as a key player in nearshoring due to its proximity to the U.S. and trade dynamics.
-    
-**Moss, T. (2020).** Measuring the Impact of Nearshoring on Mexico’s Economy. Economía Mexicana, 29(2), 15-31.  
-This study identifies metrics like foreign direct investment (FDI) and sectoral changes to evaluate nearshoring's effects in Mexico.  
-    
-**Wooldridge, J. M. (2010).** Econometric Analysis of Cross Section and Panel Data. MIT Press.  
-This textbook provides in-depth knowledge of panel data regression techniques, including longitudinal analysis.  
+**Deloitte. (2020).** Global Supply Chain and Network Transformation: A Strategy for the Future. Deloitte Insights.
+
+**McKinsey & Company. (2022).** Nearshoring: A Solution for U.S. Supply Chain Vulnerabilities. McKinsey Insights.
+
+**The Economist. (2022).** The Rise of Nearshoring in Mexico.
+
+**Moss, T. (2020).** Measuring the Impact of Nearshoring on Mexico’s Economy. Economía Mexicana, 29(2), 15-31.
+
+**Wooldrige, J. M. (2010).** Econometric Analysis of Cross Section and Panel Data. MIT Press.
