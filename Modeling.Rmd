@@ -69,6 +69,9 @@ library(rnaturalearthdata)    # Conjunto de datos espaciales adicionales para ma
 # Animaciones y Visualización Dinámica
 library(gganimate)   # Creación de animaciones en gráficos de R
 library(transformr)  # Transiciones suaves en animaciones con gganimate
+
+
+library(lmtest)
 ```
 
 ## Dataset
@@ -129,7 +132,7 @@ nearshoring_clean <- nearshoring %>%
          crime_rate, unemployment, employment, business_activity, 
          pop_density, good_governance, ratio_public_investment, 
          lq_primary, lq_secondary, lq_tertiary, patents_rate, 
-         exchange_rate, inpc, border_distance, trump_election)
+         exchange_rate, inpc, border_distance, trump_election,college_education)
 
 # Visualizar primeras filas
 head(nearshoring_clean)
@@ -152,7 +155,25 @@ principal variable de análisis (variable dependiente) y variables control (vari
 explicativas).
 
 ```{r modelo panel inicial}
+ols1 = lm(real_mxn_new_fdi ~ lq_tertiary + border_distance + pop_density + ratio_public_investment + college_education + lq_primary + real_mxn_exports_miles_dlls+ unemployment, data=nearshoring_clean)
+summary(ols1)
+```
 
+```{r}
+ols2 = lm(log(sqrt(real_mxn_new_fdi)) ~ log(lq_tertiary) + log(border_distance) + log(pop_density) + ratio_public_investment + log(college_education) + log(lq_primary) + log(real_mxn_exports_miles_dlls) + log(unemployment), data=nearshoring_clean)
+summary(ols2)
+```
+
+```{r}
+ols =  lm(real_mxn_new_fdi ~ lq_tertiary + border_distance + pop_density + ratio_public_investment + college_education + real_mxn_exports_miles_dlls, data=nearshoring_clean)
+summary(ols)
+```
+
+
+
+```{r}
+# Multicolinealidad
+vif(ols)
 ```
 
 
