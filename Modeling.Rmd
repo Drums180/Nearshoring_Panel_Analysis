@@ -31,47 +31,48 @@ knitr::include_graphics("Imagenes/Nearshoring-en-Mexico.jpg")
 
 ```{r Librerias, message=FALSE, warning=FALSE}
 # Manipulación y Transformación de Datos
-library(dplyr)       # Manipulación y transformación de datos (filter, mutate, group_by, summarise)
-library(tidyr)       # Organización y estructuración de datos en formato "tidy" (spread, gather, pivot_longer, pivot_wider)
-library(purrr)       # Programación funcional y manejo de listas
-library(janitor)     # Limpieza y formateo de datos (clean_names, remove_empty)
+library(dplyr) # Manipulación y transformación de datos (filter, mutate, group_by, summarise)
+library(tidyr) # Organización y estructuración de datos en formato "tidy" (spread, gather, pivot_longer, pivot_wider)
+library(purrr) # Programación funcional y manejo de listas
+library(janitor) # Limpieza y formateo de datos (clean_names, remove_empty)
 
 # Importación y Lectura de Archivos
-library(readr)       # Lectura rápida de archivos de texto (CSV, TSV, etc.)
-library(readxl)      # Importación de archivos Excel
+library(readr) # Lectura rápida de archivos de texto (CSV, TSV, etc.)
+library(readxl) # Importación de archivos Excel
 
 # Visualización de Datos y Gráficos
-library(ggplot2)     # Creación de gráficos avanzados y personalizables
-library(reshape2)    # Transformación de datos en diferentes estructuras para visualización
-library(corrplot)    # Visualización de matrices de correlación
-library(rpart.plot)  # Visualización de árboles de decisión
+library(ggplot2) # Creación de gráficos avanzados y personalizables
+library(reshape2) # Transformación de datos en diferentes estructuras para visualización
+library(corrplot) # Visualización de matrices de correlación
+library(rpart.plot) # Visualización de árboles de decisión
 
 # Modelado y Análisis Estadístico
-library(rpart)       # Modelos de árboles de decisión para clasificación y regresión
-library(plm)         # Manejo de datos en formato de panel para modelos econométricos
+library(rpart) # Modelos de árboles de decisión para clasificación y regresión
+library(plm) # Manejo de datos en formato de panel para modelos econométricos
 
 # Manipulación de Cadenas de Texto
-library(stringr)     # Manipulación de cadenas de texto (regex, detección de patrones, etc.)
-library(stringi)     # Procesamiento avanzado de cadenas (Unicode, conteo de caracteres, etc.)
+library(stringr) # Manipulación de cadenas de texto (regex, detección de patrones, etc.)
+library(stringi) # Procesamiento avanzado de cadenas (Unicode, conteo de caracteres, etc.)
 
 # Manejo de Fechas y Tiempos
-library(lubridate)   # Manipulación de fechas y tiempos en R
+library(lubridate) # Manipulación de fechas y tiempos en R
 
 # Generación de Informes y Tablas en R Markdown
-library(knitr)       # Creación de documentos dinámicos en R Markdown
-library(kableExtra)  # Mejora del formato y estilo de las tablas generadas con knitr::kable
+library(knitr) # Creación de documentos dinámicos en R Markdown
+library(kableExtra) # Mejora del formato y estilo de las tablas generadas con knitr::kable
 
 # Geoespacial y Mapas
-library(sf)          # Análisis y manipulación de datos espaciales en formato "Simple Features"
-library(rnaturalearth)        # Obtención de mapas geoespaciales de todo el mundo
-library(rnaturalearthdata)    # Conjunto de datos espaciales adicionales para mapas
+library(sf) # Análisis y manipulación de datos espaciales en formato "Simple Features"
+library(rnaturalearth) # Obtención de mapas geoespaciales de todo el mundo
+library(rnaturalearthdata) # Conjunto de datos espaciales adicionales para mapas
 
 # Animaciones y Visualización Dinámica
-library(gganimate)   # Creación de animaciones en gráficos de R
-library(transformr)  # Transiciones suaves en animaciones con gganimate
+library(gganimate) # Creación de animaciones en gráficos de R
+library(transformr) # Transiciones suaves en animaciones con gganimate
 
-
+# Tests de Diagnostico
 library(lmtest)
+library(car)
 ```
 
 ## Dataset
@@ -100,25 +101,30 @@ library(lmtest)
 
 ```{r Dataset, message=FALSE, warning=FALSE, include=FALSE}
 # Read the Excel file
-nearshoring <- read_excel('panel_data.xlsx')
+nearshoring <- read_excel("panel_data.xlsx")
 
 # Renombrar columnas
 nearshoring <- nearshoring %>%
-  rename(region_name = `region...23`, 
-         region_num = `region...24`)
+  rename(
+    region_name = `region...23`,
+    region_num = `region...24`
+  )
 ```
 
 ```{r Modifications, message=FALSE, warning=FALSE, include=FALSE}
 # Convertir valores de USD a MXN
 nearshoring <- nearshoring %>%
-  mutate(across(c(new_fdi, reinv_profits, intercom_acc, total_fdi, exports_miles_dlls), 
-
-                ~ . * exchange_rate, .names = "mxn_{.col}"))
+  mutate(across(c(new_fdi, reinv_profits, intercom_acc, total_fdi, exports_miles_dlls),
+    ~ . * exchange_rate,
+    .names = "mxn_{.col}"
+  ))
 
 # Ajustar valores a precios reales (2018)
 nearshoring <- nearshoring %>%
-  mutate(across(c(mxn_new_fdi, mxn_reinv_profits, mxn_intercom_acc, mxn_total_fdi, real_wage, mxn_exports_miles_dlls), 
-                ~ . / inpc * 100, .names = "real_{.col}"))
+  mutate(across(c(mxn_new_fdi, mxn_reinv_profits, mxn_intercom_acc, mxn_total_fdi, real_wage, mxn_exports_miles_dlls),
+    ~ . / inpc * 100,
+    .names = "real_{.col}"
+  ))
 
 # Convertir region_name a factor para evitar problemas con ggplot2
 nearshoring <- nearshoring %>%
@@ -126,13 +132,15 @@ nearshoring <- nearshoring %>%
 
 # Subset solo con variables reales en MXN (sin dólares)
 nearshoring_clean <- nearshoring %>%
-  select(state, year, region_name, region_num, 
-         real_mxn_new_fdi, real_mxn_reinv_profits, real_mxn_intercom_acc, 
-         real_mxn_total_fdi, real_wage, real_mxn_exports_miles_dlls, 
-         crime_rate, unemployment, employment, business_activity, 
-         pop_density, good_governance, ratio_public_investment, 
-         lq_primary, lq_secondary, lq_tertiary, patents_rate, 
-         exchange_rate, inpc, border_distance, trump_election,college_education)
+  select(
+    state, year, region_name, region_num,
+    real_mxn_new_fdi, real_mxn_reinv_profits, real_mxn_intercom_acc,
+    real_mxn_total_fdi, real_wage, real_mxn_exports_miles_dlls,
+    crime_rate, unemployment, employment, business_activity,
+    pop_density, good_governance, ratio_public_investment,
+    lq_primary, lq_secondary, lq_tertiary, patents_rate,
+    exchange_rate, inpc, border_distance, trump_election, college_education
+  )
 
 # Visualizar primeras filas
 head(nearshoring_clean)
@@ -155,27 +163,24 @@ principal variable de análisis (variable dependiente) y variables control (vari
 explicativas).
 
 ```{r modelo panel inicial}
-ols1 = lm(real_mxn_new_fdi ~ lq_tertiary + border_distance + pop_density + ratio_public_investment + college_education + lq_primary + real_mxn_exports_miles_dlls+ unemployment, data=nearshoring_clean)
+ols1 <- lm(real_mxn_new_fdi ~ lq_tertiary + border_distance + pop_density + ratio_public_investment + college_education + lq_primary + real_mxn_exports_miles_dlls + unemployment, data = nearshoring_clean)
 summary(ols1)
 ```
 
 ```{r}
-ols2 = lm(log(sqrt(real_mxn_new_fdi)) ~ log(lq_tertiary) + log(border_distance) + log(pop_density) + ratio_public_investment + log(college_education) + log(lq_primary) + log(real_mxn_exports_miles_dlls) + log(unemployment), data=nearshoring_clean)
+ols2 <- lm(log(sqrt(real_mxn_new_fdi)) ~ log(lq_tertiary) + log(border_distance) + log(pop_density) + ratio_public_investment + log(college_education) + log(lq_primary) + log(real_mxn_exports_miles_dlls) + log(unemployment), data = nearshoring_clean)
 summary(ols2)
 ```
 
 ```{r}
-ols =  lm(real_mxn_new_fdi ~ lq_tertiary + border_distance + pop_density + ratio_public_investment + college_education + real_mxn_exports_miles_dlls, data=nearshoring_clean)
+ols <- lm(real_mxn_new_fdi ~ lq_tertiary + border_distance + pop_density + ratio_public_investment + college_education + real_mxn_exports_miles_dlls, data = nearshoring_clean)
 summary(ols)
 ```
 
-
-
+### Preparación a Modelo Panel
 ```{r}
-# Multicolinealidad
-vif(ols)
+nearshoring_clean <- pdata.frame(nearshoring_clean, index = c("state", "year"))
 ```
-
 
 ### Estimación de Modelos de Regresión de Datos Panel (15%)
 Con base en la especificación anterior, estimar al menos 4 – 5 modelos de regresión
@@ -209,7 +214,7 @@ cada uno de los modelos de regresión de datos panel estimados:
 #### a. Multicolinealidad (multicollinearity)
 
 ```{r Multicolinealidad}
-
+vif(ols)
 ```
 
 #### b. Heterocedasticidad (heteroscedasticity)
