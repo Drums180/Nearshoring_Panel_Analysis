@@ -196,7 +196,11 @@ summary(modelo_fe)
 ```
 
 ```{r modelo panel especificación 3 - FE – Two Ways}
-
+modelo_fe_tw <- plm(real_mxn_new_fdi ~ lq_tertiary + border_distance + pop_density + ratio_public_investment + college_education + log(real_mxn_exports_miles_dlls), 
+                    data = nearshoring_clean, 
+                    model = "within", 
+                    effect = "twoways")
+summary(modelo_fe_tw)
 ```
 
 ```{r modelo panel especificación 4 - Random Effects}
