@@ -1,0 +1,120 @@
+---
+title: "Time Series"
+author: |
+  **David Domínguez**  
+  **Arturo Silva**  
+  **Luis González**  
+  **Alberto Valiente**  
+  **André Ramírez**  
+  **Bruno Díaz**
+date: "`r format(Sys.Date(), '%B %d, %Y')`"
+output: 
+  html_document:
+    toc: true
+    toc_float: true
+    fig_caption: true
+    theme: readable
+    highlight: tango
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(warning = FALSE, message = FALSE)
+```
+
+```{r Banner-portada, echo=FALSE, fig.cap="<small>Foto FOREIGN AFFAIRS LATINOAMÉRICA</small>", out.width='100%'}
+knitr::include_graphics("Imagenes/Nearshoring-en-Mexico.jpg")
+```
+
+## Librerias
+
+```{r Librerias, message=FALSE, warning=FALSE}
+# Manipulación y Transformación de Datos
+library(dplyr) # Manipulación y transformación de datos (filter, mutate, group_by, summarise)
+library(tidyr) # Organización y estructuración de datos en formato "tidy" (spread, gather, pivot_longer, pivot_wider)
+library(purrr) # Programación funcional y manejo de listas
+library(janitor) # Limpieza y formateo de datos (clean_names, remove_empty)
+
+# Importación y Lectura de Archivos
+library(readr) # Lectura rápida de archivos de texto (CSV, TSV, etc.)
+library(readxl) # Importación de archivos Excel
+
+# Visualización de Datos y Gráficos
+library(ggplot2) # Creación de gráficos avanzados y personalizables
+library(reshape2) # Transformación de datos en diferentes estructuras para visualización
+library(corrplot) # Visualización de matrices de correlación
+library(rpart.plot) # Visualización de árboles de decisión
+
+# Modelado y Análisis Estadístico
+library(rpart) # Modelos de árboles de decisión para clasificación y regresión
+library(plm) # Manejo de datos en formato de panel para modelos econométricos
+
+# Manipulación de Cadenas de Texto
+library(stringr) # Manipulación de cadenas de texto (regex, detección de patrones, etc.)
+library(stringi) # Procesamiento avanzado de cadenas (Unicode, conteo de caracteres, etc.)
+
+# Manejo de Fechas y Tiempos
+library(lubridate) # Manipulación de fechas y tiempos en R
+
+# Generación de Informes y Tablas en R Markdown
+library(knitr) # Creación de documentos dinámicos en R Markdown
+library(kableExtra) # Mejora del formato y estilo de las tablas generadas con knitr::kable
+
+# Geoespacial y Mapas
+library(sf) # Análisis y manipulación de datos espaciales en formato "Simple Features"
+library(rnaturalearth) # Obtención de mapas geoespaciales de todo el mundo
+library(rnaturalearthdata) # Conjunto de datos espaciales adicionales para mapas
+
+# Animaciones y Visualización Dinámica
+library(gganimate) # Creación de animaciones en gráficos de R
+library(transformr) # Transiciones suaves en animaciones con gganimate
+
+# Tests de Diagnostico
+library(lmtest)
+library(car)
+```
+
+
+## Dataset
+
+#### Glosario:
+* **new_fdi:**	New Foreign Direct Investment Inflows. Millions of Dollars.  
+* **reinv_profits:**	Reinvestment of Profits - Foreign Direct Investment Inflows. Millions of Dollars.  
+* **intercom_acc:**	Intercompany Accounts - Foreign Direct Investment Inflows. Millions of Dollars.  
+* **total_fdi:**	Total Foreign Direct Investment Inflows. Millions of Dollars.  
+* **crime_rate:**	Crime rate per 100,000 state's population.  
+* **unemployment:**	Percentaje of unemployed population.  
+* **employment:** 	Percentaje of employed population.  
+* **business_activity:**	Index of economic activity weighted by the state's distance to nearest U.S. port of entry.  
+* **real_wage:**	Real wage using 2018 INPC = 100. MXN Pesos. 
+* **pop_density:**	Population per state's land area km2.  
+* **good_governance:**	Ratio between state's public investment and its public debt.  
+* **ratio_public_investment:**	Ratio between state's public investment and its gross domestic product (GDP).  
+* **lq_primary:**	Location quotient of employed people in primary industry.  
+* **lq_secondary:**	Location quotient of employed people in secondary sector.  
+* **lq_tertiary	Location:** quotient of employed people in tertiary sector.  
+* **exchange_rate:**	MXN pesos per 1 USD  
+* **patents_rate:**	Number of R&D patentes per 100,000 state's population  
+* **inpc:**	National Price Consumer Index. 2018 = 100  
+* **college_education:**	Percentage of population with at least high school education.
+* **exports_dollars:**	Value of exports. Thousands of dollars.
+
+
+```{r Dataset, message=FALSE, warning=FALSE, include=FALSE}
+# Read the Excel file
+nearshoring_ts <- read_excel("panel_data.xlsx", sheet = "time series data")
+```
+
+
+## Introducción
+
+## Visualización de Datos
+
+## Estimación de Modelos de Series de Tiempo
+
+## Pruebas de Diagnostico
+
+## Selección de Modelo e Interpretación de Resultados
+
+## Conclusiones 
+
+## Referencias 
+
