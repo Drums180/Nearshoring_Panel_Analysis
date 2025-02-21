@@ -200,7 +200,11 @@ summary(modelo_fe)
 ```
 
 ```{r modelo panel especificación 4 - Random Effects}
+random_effects_model_1 <- plm(real_mxn_new_fdi ~ lq_tertiary + border_distance + pop_density + ratio_public_investment + college_education + log(real_mxn_exports_miles_dlls), data=nearshoring_clean, index = c("state", "year"), model = "random")
 
+
+# Mostrar resúmenes de los modelos
+summary(random_effects_model_1)
 ```
 
 ```{r modelo panel especificación 5 - Pooled OLS}
