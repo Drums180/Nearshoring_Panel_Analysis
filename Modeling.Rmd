@@ -188,7 +188,11 @@ de datos panel que incluyen FE – One Way, FE – Two Ways, Random Effects, Poo
 OLS, y Dynamic Panel Model.
 
 ```{r modelo panel especificación 2 - FE – One Way}
+data_panel <- pdata.frame(nearshoring_clean, index = c("state", "year"))
 
+modelo_fe <- plm(real_mxn_new_fdi ~ lq_tertiary + border_distance + pop_density + ratio_public_investment + college_education + log(real_mxn_exports_miles_dlls), data=nearshoring_clean, 
+                 model = "within")
+summary(modelo_fe) 
 ```
 
 ```{r modelo panel especificación 3 - FE – Two Ways}
