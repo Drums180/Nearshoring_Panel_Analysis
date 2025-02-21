@@ -200,7 +200,26 @@ OLS, y Dynamic Panel Model.
 ```
 
 ```{r modelo panel especificación 5 - Pooled OLS}
+# Modelo 1
+pooled_model_1 <- plm(real_mxn_total_fdi ~+ pop_density + good_governance+ patents_rate + border_distance, 
+                        data = nearshoring_clean, 
+                        index = c("state", "year"), 
+                        model = "pooling")
 
+# Modelo 2
+pooled_model_3 <- plm(real_mxn_new_fdi ~ lq_tertiary + border_distance + pop_density + ratio_public_investment + college_education + log(real_mxn_exports_miles_dlls), 
+                        data = nearshoring_clean, 
+                        index = c("state", "year"), 
+                        model = "pooling")
+
+# Modelo 3
+pooled_model_2 <- plm(real_mxn_total_fdi ~ business_activity + real_wage + pop_density + 
+                        ratio_public_investment + patents_rate + border_distance, 
+                        data = nearshoring_clean, 
+                        index = c("state", "year"), 
+                        model = "pooling")
+
+summary(pooled_model_3)
 ```
 
 ```{r modelo panel especificación 6 - Dynamic Panel Model}
