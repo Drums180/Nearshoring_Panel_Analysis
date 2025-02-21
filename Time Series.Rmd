@@ -70,6 +70,10 @@ library(transformr) # Transiciones suaves en animaciones con gganimate
 # Tests de Diagnostico
 library(lmtest)
 library(car)
+
+#
+library(zoo)
+library(xts)
 ```
 
 
@@ -101,6 +105,28 @@ library(car)
 ```{r Dataset, message=FALSE, warning=FALSE, include=FALSE}
 # Read the Excel file
 nearshoring_ts <- read_excel("panel_data.xlsx", sheet = "time series data")
+```
+
+```{r}
+
+nearshoring_ts$real_Mxn_New_FDI_Inflows = ((nearshoring_ts$New_FDI_Inflows * nearshoring_ts$Exchange_Rate) / nearshoring_ts$INPC)
+
+nearshoring_ts$Quarter_formatted <- factor(nearshoring_ts$Quarter, 
+                                 levels = c("I", "II", "III", "IV"),
+                                 labels = c("Q1", "Q2", "Q3", "Q4"))
+
+nearshoring_ts$yearqtr_str <- paste(nearshoring_ts$Year, nearshoring_ts$Quarter_formatted)
+
+# Convertir la cadena a un objeto yearqtr
+nearshoring_ts$yearqtr <- as.yearqtr(nearshoring_ts$yearqtr_str, format = "%Y Q%q")
+# Convertir el objeto yearqtr a una fecha.
+nearshoring_ts$date <- as.Date(nearshoring_ts$yearqtr, frac = 0)
+# Ordenar el data frame por la fecha recién creada
+nearshoring_ts <- nearshoring_ts[order(nearshoring_ts$date), ]
+# Paso 6: Crear el objeto xts usando la columna de fechas como índice
+NFDI_xts <- xts(nearshoring_ts$real_Mxn_New_FDI_Inflows, order.by = nearshoring_ts$date)
+
+plot(NFDI_xts)
 ```
 
 
