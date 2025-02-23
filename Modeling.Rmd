@@ -247,12 +247,27 @@ vif(ols)
 #### b. Heterocedasticidad (heteroscedasticity)
 
 ```{r Heterocedasticidad}
+library(lmtest)
 
+bptest(pooled_model_3)
+
+cook_weisberg_test <- bptest(pooled_model_3 ~ fitted(pooled_model_3))
+cook_weisberg_test
+
+# Test de White para heterocedasticidad (es más general)
+bptest(pooled_model_3, studentize = FALSE)
+
+coeftest(pooled_model_3, vcov = vcovHC(pooled_model_3, type = "HC0"))
 ```
 
 #### c. Autocorrelación Serial (serial correlation)
 
 ```{r Autocorrelación Serial}
+
+# Test de Durbin Watson
+pdwtest(pooled_model_3)
+# Test de Breusch Godfrey
+bgtest(pooled_model_3)
 
 ```
 
