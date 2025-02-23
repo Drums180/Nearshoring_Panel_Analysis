@@ -27,6 +27,12 @@ knitr::include_graphics("Imagenes/Nearshoring-en-Mexico.jpg")
 
 ## Abstracción
 
+Este reporte analiza la estimación de modelos de regresión de datos panel con el objetivo de identificar los principales factores asociados con la atracción de nearshoring en México. En primer lugar, se especificará el modelo de regresión de datos panel a estimar, definiendo la variable dependiente y las variables explicativas. Posteriormente, se estimarán diferentes enfoques de modelado, incluyendo efectos fijos (One-Way y Time-Effects), efectos aleatorios, Pooled OLS y un modelo dinámico de datos panel.
+
+Para evaluar la validez de los modelos estimados, se llevarán a cabo pruebas de diagnóstico que permitan identificar posibles problemas de multicolinealidad, heterocedasticidad, autocorrelación serial y estacionariedad. Con base en estos resultados, se seleccionará el modelo que presente el mejor desempeño y se analizarán los factores clave que influyen en la llegada de inversión extranjera directa asociada al nearshoring en México.
+
+Finalmente, se presentará una comparación entre los valores actuales de inversión extranjera y las predicciones del modelo, seguido de una síntesis de los hallazgos clave del análisis. Los resultados obtenidos proporcionarán una mejor comprensión del impacto de diversas variables económicas y estructurales en la dinámica del nearshoring en el país.
+
 ## Librerias
 
 ```{r Librerias, message=FALSE, warning=FALSE}
@@ -49,6 +55,8 @@ library(rpart.plot) # Visualización de árboles de decisión
 # Modelado y Análisis Estadístico
 library(rpart) # Modelos de árboles de decisión para clasificación y regresión
 library(plm) # Manejo de datos en formato de panel para modelos econométricos
+library(dynlm) # Modelos lineales dinámicos y regresión de series temporales
+library(tseries) # Modelos de series de tiempo
 
 # Manipulación de Cadenas de Texto
 library(stringr) # Manipulación de cadenas de texto (regex, detección de patrones, etc.)
@@ -71,8 +79,10 @@ library(gganimate) # Creación de animaciones en gráficos de R
 library(transformr) # Transiciones suaves en animaciones con gganimate
 
 # Tests de Diagnostico
-library(lmtest)
-library(car)
+library(lmtest) # Prueba de modelos de regresión lineal
+library(car) # Compañero de regresión aplicada para VIF
+library(sandwich) # Software orientado a objetos para estimadores de matrices de covarianza robustos al modelo
+library(stargazer) # Comparacion de modelos
 ```
 
 ## Dataset
@@ -142,22 +152,33 @@ nearshoring_clean <- nearshoring %>%
     exchange_rate, inpc, border_distance, trump_election, college_education
   )
 
-# Visualizar primeras filas
-head(nearshoring_clean)
+# Convertir variables con negativos a log
+nearshoring_clean$log_real_mxn_new_fdi <- ifelse(
+  nearshoring_clean$real_mxn_new_fdi >= 0,
+  log(nearshoring_clean$real_mxn_new_fdi + 1),
+  -log(abs(nearshoring_clean$real_mxn_new_fdi))
+)
+
+nearshoring_clean$log_real_mxn_total_fdi <- ifelse(
+  nearshoring_clean$real_mxn_total_fdi >= 0,
+  log(nearshoring_clean$real_mxn_total_fdi + 1),
+  -log(abs(nearshoring_clean$real_mxn_total_fdi))
+)
 ```
 
 
 ## Tratamiento de Nulos
 Para abordar la presencia de valores nulos de forma sencilla, se opta por descartar por completo el año que contiene datos faltantes. De este modo, se evita introducir sesgos en el análisis al no tener que estimar ni imputar el valor inicial perdido.
+
 ```{r}
 # Eliminación de año 2006
-nearshoring_clean <- nearshoring_clean %>%
-  filter(year != 2006)
+# nearshoring_clean <- nearshoring_clean %>%
+  #filter(year != 2006)
 ```
 
 ## Especificaciones
 
-### Especificación de Modelo de Regresión de Datos Panel (10%)
+### Especificación de Modelo de Regresión de Datos Panel
 - Especificar el modelo de regresión de datos panel a estimar. Es decir, especificar la
 principal variable de análisis (variable dependiente) y variables control (variables
 explicativas).
@@ -173,7 +194,7 @@ summary(ols2)
 ```
 
 ```{r}
-ols <- lm(real_mxn_new_fdi ~ lq_tertiary + border_distance + pop_density + ratio_public_investment + college_education + real_mxn_exports_miles_dlls, data = nearshoring_clean)
+ols <- lm(log_real_mxn_new_fdi ~ lq_tertiary + border_distance + pop_density + ratio_public_investment + college_education + real_mxn_exports_miles_dlls, data = nearshoring_clean)
 summary(ols)
 ```
 
@@ -182,47 +203,104 @@ summary(ols)
 nearshoring_clean <- pdata.frame(nearshoring_clean, index = c("state", "year"))
 ```
 
-### Estimación de Modelos de Regresión de Datos Panel (15%)
+
+### Estimación de Modelos de Regresión de Datos Panel
 Con base en la especificación anterior, estimar al menos 4 – 5 modelos de regresión
 de datos panel que incluyen FE – One Way, FE – Two Ways, Random Effects, Pooled
 OLS, y Dynamic Panel Model.
 
+##### Modelo de Efectos Fijos - One Way
 ```{r modelo panel especificación 2 - FE – One Way}
-data_panel <- pdata.frame(nearshoring_clean, index = c("state", "year"))
+# Modelo 1
+fixed_model <- plm(log_real_mxn_new_fdi ~ business_activity + log(real_wage) + log(pop_density) + 
+                        ratio_public_investment + patents_rate, 
+                        data = nearshoring_clean, 
+                        index = c("state", "year"), 
+                        model = "within")
 
-modelo_fe <- plm(real_mxn_new_fdi ~ lq_tertiary + border_distance + pop_density + ratio_public_investment + college_education + log(real_mxn_exports_miles_dlls), data=nearshoring_clean, 
-                 model = "within")
-summary(modelo_fe) 
+summary(fixed_model) 
 ```
 
-```{r modelo panel especificación 3 - FE – Two Ways}
-
+###### Prueba F para validación de modelos
+```{r}
+pFtest(fixed_model, ols) 
+# Null Hypothesis (H₀): OLS is better than Fixed Effects
+# Alternative Hypothesis (H₁): FE is a better regression method of estimation.
+```
+####### Descripción de eventos fijos
+```{r}
+summary(fixef((fixed_model)))
 ```
 
+###### Prueba de Lagrange para Efectos Fijos
+```{r}
+plmtest(fixed_model, effect="time", type="bp") 
+# Null Hypothesis (H₀): No time-fixed effects are needed 
+# Alternative Hypothesis (H₁): Time-fixed effects are present and needed in the model.
+```
+
+##### Modelo de Efectos Fijos - Time Effects
+```{r modelo panel especificación 3 - FE – Time Effects (Log Response Variable)}
+fixed_time_model<-plm(log_real_mxn_new_fdi ~ business_activity + log(real_wage) + log(pop_density) + good_governance + patents_rate + log(exchange_rate) + lq_tertiary + trump_election, 
+                        data = nearshoring_clean, 
+                        index = c("state", "year"), 
+                        model = "within",
+                        effect = 'time')
+
+summary(fixed_time_model) # time fixed effects are unobservable factors that change over time but are constant across entities (e.g., exchange rate). 
+```
+
+Dado que hemos identificado heterocedasticidad y autocorrelación, podemos aplicar el método de Arellano para corregir estos efectos y mejorar la estimación de los coeficientes.
+
+```{r modelo panel especificación 3 - FE – Time Effects (Arellano Coef)}
+fixed_time_model_arellano<-plm(real_mxn_new_fdi ~ business_activity + log(real_wage) + log(pop_density) + good_governance + patents_rate + log(exchange_rate) + lq_tertiary + trump_election, 
+                        data = nearshoring_clean, 
+                        index = c("state", "year"), 
+                        model = "within",
+                        effect = 'time')
+
+coeftest(fixed_time_model_arellano, vcovHC(fixed_time_model_arellano, method = "arellano")) # it is recommended for fixed effects when heteroscedasticity and serial correlation are shown in the diagnostic tests. 
+```
+
+##### Modelo de Efectos Aleatorios - Random Effects
 ```{r modelo panel especificación 4 - Random Effects}
-random_effects_model_1 <- plm(real_mxn_new_fdi ~ lq_tertiary + border_distance + pop_density + ratio_public_investment + college_education + log(real_mxn_exports_miles_dlls), data=nearshoring_clean, index = c("state", "year"), model = "random")
+# Modelo 1
+random_model <- plm(log_real_mxn_new_fdi ~ business_activity + log(real_wage) + log(pop_density) + 
+                        ratio_public_investment + patents_rate + college_education + trump_election, 
+                        data = nearshoring_clean, 
+                        index = c("state", "year"), 
+                        model = "random")
 
-
-# Mostrar resúmenes de los modelos
-summary(random_effects_model_1)
+summary(random_model) 
 ```
 
+###### Prueba Hausman para validación de efectos
+```{r}
+phtest(fixed_model, random_model) 
+# Null Hypothesis (H₀): The random effects model is appropriate
+# Alternative Hypothesis (H₁): The fixed effects model is more appropriate 
+
+phtest(fixed_time_model, random_model)
+# Null Hypothesis (H₀): The random effects model is appropriate
+# Alternative Hypothesis (H₁): The fixed time effects model is more appropriate 
+```
+
+##### Modelo de Efectos Mixtos - Pooled Effects
 ```{r modelo panel especificación 5 - Pooled OLS}
 # Modelo 1
-pooled_model_1 <- plm(real_mxn_total_fdi ~+ pop_density + good_governance+ patents_rate + border_distance, 
+pooled_model_1 <- plm(log_real_mxn_new_fdi ~+ pop_density + good_governance+ patents_rate + border_distance, 
                         data = nearshoring_clean, 
                         index = c("state", "year"), 
                         model = "pooling")
 
 # Modelo 2
-pooled_model_3 <- plm(real_mxn_new_fdi ~ lq_tertiary + border_distance + pop_density + ratio_public_investment + college_education + log(real_mxn_exports_miles_dlls), 
+pooled_model_2 <- plm(log_real_mxn_new_fdi ~ lq_tertiary + border_distance + pop_density + ratio_public_investment + college_education + log(real_mxn_exports_miles_dlls), 
                         data = nearshoring_clean, 
                         index = c("state", "year"), 
                         model = "pooling")
 
 # Modelo 3
-pooled_model_2 <- plm(real_mxn_total_fdi ~ business_activity + real_wage + pop_density + 
-                        ratio_public_investment + patents_rate + border_distance, 
+pooled_model_3 <- plm(log_real_mxn_new_fdi ~ business_activity + log(real_wage) + log(pop_density) + good_governance + patents_rate + lq_tertiary + trump_election,  
                         data = nearshoring_clean, 
                         index = c("state", "year"), 
                         model = "pooling")
@@ -230,11 +308,19 @@ pooled_model_2 <- plm(real_mxn_total_fdi ~ business_activity + real_wage + pop_d
 summary(pooled_model_3)
 ```
 
+##### Modelo Dinamico Panel - Dynamic Panel
 ```{r modelo panel especificación 6 - Dynamic Panel Model}
+# Modelo 1
+dynamic_model<-plm(log_real_mxn_new_fdi ~ lag(log_real_mxn_total_fdi) + business_activity + log(real_wage) + log(pop_density) + good_governance + patents_rate + log(exchange_rate) + lq_tertiary + trump_election, 
+                        data = nearshoring_clean, 
+                        index = c("state", "year"), 
+                        model = "within",
+                        effect = 'time')
 
+summary(dynamic_model)
 ```
 
-### Pruebas de Diagnóstico (25%)
+### Pruebas de Diagnóstico
 - Mediante Pruebas de Diagnóstico, identificar la posible presencia de los siguientes en
 cada uno de los modelos de regresión de datos panel estimados:
 
@@ -242,59 +328,136 @@ cada uno de los modelos de regresión de datos panel estimados:
 
 ```{r Multicolinealidad}
 vif(ols)
+# Valores < 5: No hay problemas de multicolinealidad.
+# Valores entre 5 y 10: Puede haber cierta multicolinealidad
+# Valores > 10: Alta colinealidad
 ```
 
 #### b. Heterocedasticidad (heteroscedasticity)
 
 ```{r Heterocedasticidad}
-
+bptest(fixed_time_model)   
+# Null Hypothesis (H₀): Homocedasticidad
+# Alternative Hypothesis (H₁): Presencia de Heterocedasticidad
 ```
 
 #### c. Autocorrelación Serial (serial correlation)
 
 ```{r Autocorrelación Serial}
-
+pwartest(fixed_time_model)
+# Null Hypothesis (H₀): No hay autocorrelación serial en los errores.
+# Alternative Hypothesis (H₁): Existe autocorrelación serial en los errores.
 ```
 
 #### d. Estacionariedad (stationary) (opcional)
 
 ```{r Estacionariedad (stationary)}
-
+adf.test(nearshoring_clean$log_real_mxn_new_fdi)
+# Null Hypothesis (H₀): La serie no es estacionaria.
+# Alternative Hypothesis (H₁): La serie es estacionaria.
 ```
 
-## Selección de Modelo e Interpretación de Resultados (25%)
+## Selección de Modelo e Interpretación de Resultados
 
 ```{r Stargazing Comparison}
-
+stargazer(fixed_time_model, random_model, pooled_model_3, dynamic_model,
+          title="Panel Regression Analysis Using log", 
+          type="text", 
+          column.labels = c("Fixed Time Effects","Random Effecsts","Pooled", "Dynamic"))
 ```
 
 
-##### Con base en las pruebas de diagnóstico, mejorar la estimación de los resultados, y
-seleccionar el modelo de regresión de datos panel que exhibe el mejor desempeño.
+##### Con base en las pruebas de diagnóstico, mejorar la estimación de los resultados, y seleccionar el modelo de regresión de datos panel que exhibe el mejor desempeño.
 
+Dado que los datos presentaban problemas de **heterocedasticidad** y **autocorrelación**, se optó por aplicar una **transformación logarítmica** para mitigar estos efectos. Para ello, se transformó la variable dependiente a valores logarítmicos, utilizando técnicas de conversión con valores absolutos y la aplicación de negativos para evitar errores de *NA* al tratar con valores negativos en la inversión extranjera nueva. Como resultado, el conjunto de datos logró cumplir con la **suposición de homocedasticidad**, mejorando así la estabilidad de las estimaciones.  
 
+Sin embargo, la **autocorrelación** siguió siendo un problema sin una solución completa. Para abordar este desafío, se empleó el **método de Arellano** en nuestro mejor modelo, el de **efectos fijos en el tiempo**, con el objetivo de evaluar si los coeficientes se veían ajustados y proporcionaban mejores resultados. Adicionalmente, se exploró un **modelo dinámico** en el que se incorporó un **rezago de un período** de la variable de inversión extranjera directa total. Este modelo presentó la mejor **R² y R² ajustada** con 7.8%, aunque el impacto de agregar solo este rezago no fue significativo. Por ello, se optó por el modelo que explicaba menos, pero que ofrecía **estimaciones más confiables**.  
 
-##### A partir del modelo seleccionado, identificar los principales factores asociados con la
-atracción de “Nearshoring” para el caso de México.
+Al comparar los modelos, observamos que el **modelo de efectos fijos en el tiempo** mostró la relación más clara entre la inversión extranjera y variables clave como **el coeficiente de localización terciario (*lq_tertiary*) y el logaritmo del salario real (*log(real_wage)*)**, ambos con coeficientes significativos y magnitudes relevantes. El **modelo de efectos aleatorios**, aunque no seleccionado, sugirió que el salario real es un determinante constante a través de las especificaciones. Por otro lado, el **modelo dinámico**, al incluir un rezago de la inversión total, reflejó un posible problema de autocorrelación, ya que la nueva inversión forma parte de la inversión total, lo que dificulta una interpretación clara de su impacto.  
 
+Es importante destacar que, si hubiéramos **ignorado los problemas de heterocedasticidad y autocorrelación**, el modelo **agrupado (*pooled*)** habría mostrado el mejor desempeño en términos de **R², alcanzando aproximadamente un 60%**. Sin embargo, sus estimaciones resultaron sesgadas, y la falta de control sobre las diferencias estructurales entre estados comprometía la validez de las conclusiones obtenidas. Por ello, la elección del **modelo de efectos fijos en el tiempo con corrección de Arellano** fue la opción más adecuada, al ofrecer estimaciones más robustas y representativas de los factores que influyen en la atracción de inversión extranjera directa en México.
 
+##### A partir del modelo seleccionado, identificar los principales factores asociados con la atracción de “Nearshoring” para el caso de México.
 
-##### Visualizar / Contrastar los valores actuales de nueva inversión extranjera directa versus
-la predicción de dichos valores mediante el modelo de regresión seleccionado.
-(opcional).
+Los resultados del modelo de efectos fijos en el tiempo indican que los dos factores más importantes para explicar la inversión extranjera directa (IED) en términos reales son **el coeficiente de localización terciario (*lq_tertiary*)** y **el logaritmo del salario real (*log(real_wage)*)**. Ambos coeficientes son estadísticamente significativos, lo que sugiere que los estados con una mayor presencia en el sector terciario y aquellos con salarios reales más altos tienden a atraer más inversión extranjera.  
+
+El coeficiente asociado al **logaritmo del salario real** es *2.78*, lo que implica que un incremento del *1%* en el salario real se asocia con un aumento del *2.78%* en la IED real, manteniendo las demás variables constantes. Esto es consistente con la idea de que **las empresas extranjeras buscan establecer operaciones en lugares donde haya talento disponible**, incluso si esto implica pagar salarios relativamente más altos en comparación con otras regiones del mismo país. Sin embargo, estos salarios siguen siendo competitivos en comparación con los países de origen de las empresas inversionistas.  
+
+Por otro lado, el coeficiente de **localización terciaria** es de *3.46*, lo que indica que un mayor grado de especialización en el sector terciario se asocia con un incremento significativo en la IED. Esto tiene sentido, ya que **los estados con una mayor participación en actividades terciarias suelen ser centros de especialización y conocimiento**, lo que los hace atractivos para empresas extranjeras que buscan mano de obra calificada y servicios especializados.  
+
+Los resultados del modelo utilizando el **método de Arellano**, que corrige los problemas de **heterocedasticidad y autocorrelación** previamente diagnosticados, son **consistentes con los obtenidos en el modelo de efectos fijos en el tiempo**. Sin embargo, este método revela que el **logaritmo de la densidad poblacional (*log(pop_density)*)** también es estadísticamente significativo. El coeficiente de *2.22* indica que un aumento del *1%* en la densidad poblacional se asocia con un incremento del *2.22%* en la inversión extranjera directa real, lo que refuerza la idea de que **las ciudades más densamente pobladas suelen ofrecer mejores condiciones de mercado y mayor disponibilidad de talento**.  
+
+En conclusión, los resultados indican que la inversión extranjera directa se ve impulsada principalmente por **la disponibilidad de talento** (reflejado en salarios más altos y la especialización en el sector terciario) y **la concentración de población en ciertas regiones**. Estos hallazgos son intuitivos, ya que **los inversionistas buscan ubicaciones con economías más desarrolladas, infraestructura adecuada y un entorno laboral competitivo**.
+
+##### Visualizar / Contrastar los valores actuales de nueva inversión extranjera directa versus la predicción de dichos valores mediante el modelo de regresión seleccionado. (opcional).
 
 ```{r analisis de prediccion}
-
+# Se lo dejo pendiente profe porque no supe hacerlo :(
 ```
 
+## Conclusiones
 
-## Conclusiones (15%)
 ##### Brevemente, describir los principales hallazagos del análisis de datos panel.
 
+El análisis de datos panel nos permitió evaluar de manera más estructurada los determinantes de la inversión extranjera directa (*FDI*) en México, comparando estos resultados con los hallazgos iniciales del Análisis Exploratorio de Datos (*EDA*).  
 
-##### 1 Incluir una breve descrpción de los resultados obtenidos en el desarrollo del documento de trabajo para cada una de
-las instrucciones (10%).
+**1. Coincidencias con el EDA**  
+- **El papel del sector terciario y los salarios reales:** Nuestro análisis confirmó que los estados con una mayor especialización en el sector terciario (*lq_tertiary*) y con **salarios reales más altos** tienden a atraer más inversión extranjera, lo que valida nuestra hipótesis de que el talento y la especialización económica son factores clave en la competitividad de los estados.  
+
+- **El crecimiento del centro-norte tras 2020:** Aunque no fue el factor más fuerte, el análisis econométrico muestra que la inversión extranjera en el periodo reciente ha respondido a dinámicas de reubicación (*nearshoring*), lo que coincide con el hallazgo en el EDA de que **estados como San Luis Potosí y Zacatecas han incrementado su captación de capital** en años recientes.  
+
+- **La importancia de la densidad poblacional:** Aunque en el EDA no fue un factor central, el modelo de Arellano reveló que la **densidad poblacional es estadísticamente significativa** para la atracción de inversión extranjera, sugiriendo que la concentración de personas puede facilitar la creación de mercados laborales competitivos.  
+
+**2. Diferencias con el EDA**  
+- **Infraestructura y educación no fueron determinantes en los modelos econométricos:** Aunque en el EDA esperábamos que **el nivel educativo y la inversión en infraestructura pública fueran factores clave**, los modelos de datos panel no encontraron evidencia suficiente para respaldar esta hipótesis. En particular, la variable *ratio_public_investment* no resultó ser significativa, lo que sugiere que la inversión extranjera en México no está necesariamente vinculada con el gasto público en infraestructura.  
+
+- **La innovación (medida por la tasa de patentes) tampoco tuvo un impacto significativo:** En el EDA, una de nuestras hipótesis era que **la innovación impulsaría la inversión extranjera**, pero los modelos econométricos mostraron que la relación entre el *patents_rate* y la *FDI* no es fuerte. Esto sugiere que la atracción de inversión responde más a factores de mercado y estructura productiva que a esfuerzos aislados en innovación.  
+
+- **El efecto de la cercanía a EE.UU. fue menos claro en los modelos de datos panel:** Mientras que el EDA mostró que **los estados fronterizos han mantenido una inversión constante**, en los modelos econométricos este factor no fue el principal determinante. Esto indica que, aunque la proximidad geográfica es importante, su efecto podría estar siendo capturado a través de otras variables como el desarrollo del sector terciario y el salario real.  
+
+**3. Validación y Consideraciones Finales**  
+- **El modelo de efectos fijos en el tiempo fue el más adecuado**, según la prueba de Hausman, lo que indica que las variaciones temporales dentro de cada estado son más relevantes que las diferencias estructurales entre estados.  
+
+- **El modelo dinámico reveló posibles problemas de autocorrelación**, ya que incluir un rezago de la inversión total implica que los valores pasados influyen directamente en la inversión nueva, lo que dificulta una interpretación clara del impacto de cada variable.  
+
+- **El modelo agrupado (*pooled OLS*) presentó la mayor R², pero sus estimaciones estaban sesgadas**, lo que confirma la importancia de utilizar modelos más robustos para capturar la dinámica de la inversión extranjera.  
+
+En general, los resultados del análisis de datos panel refuerzan la importancia del talento humano y los salarios competitivos en la atracción de inversión extranjera, pero desafían algunas de nuestras hipótesis iniciales sobre infraestructura, educación y cercanía a EE.UU. Esto sugiere que los inversionistas priorizan **factores de especialización y costos laborales** sobre la calidad de la infraestructura o la presencia de centros de innovación en sus decisiones de inversión en México.
+
+##### 1 Incluir una breve descrpción de los resultados obtenidos en el desarrollo del documento de trabajo para cada una de las instrucciones (10%).
+
+El análisis de regresión de datos panel permitió evaluar los factores clave asociados con la atracción de inversión extranjera directa (*FDI*) en México. A lo largo del proceso, se identificaron varios hallazgos relevantes:
+
+- **No se detectaron problemas de multicolinealidad**, lo que sugiere que las variables explicativas utilizadas en los modelos no presentan relaciones excesivamente fuertes entre sí.  
+
+- **Los resultados generales fueron similares a los obtenidos con OLS**, lo que refuerza la consistencia de las estimaciones obtenidas a través de modelos de datos panel.  
+
+- **Las variables con mayor significancia estadística no necesariamente presentaron los coeficientes más altos**, lo que sugiere que aunque ciertas variables tienen un impacto claro en la *FDI*, su magnitud puede ser más moderada de lo esperado.  
+
+- **Variables que inicialmente parecían determinantes, como la educación y el valor de las exportaciones, no mostraron una gran relevancia en los modelos finales**, lo que indica que estos factores podrían no ser los principales motores de la inversión extranjera en el contexto analizado.  
+
+- **En el modelo de efectos fijos estándar, ningún estado mostró resultados estadísticamente significativos**, lo que sugiere que los efectos de cada entidad federativa en la inversión extranjera pueden ser más homogéneos de lo anticipado.  
+
+- **Las pruebas de Hausman favorecieron el modelo de efectos fijos en el tiempo**, lo que sugiere que los factores que cambian a lo largo del tiempo dentro de cada estado son más relevantes para explicar la variación en la *FDI*.  
+
+- **El modelo de efectos aleatorios destacó principalmente la importancia del salario real**, lo que refuerza la idea de que esta variable es un determinante clave para la inversión extranjera a lo largo de los distintos modelos.  
+
+- **El modelo dinámico incluyó un rezago de la inversión extranjera total, lo que introduce una posible autocorrelación y una interpretación más compleja**, ya que la nueva inversión es parte del total, lo que puede estar generando una dependencia entre periodos.  
+
+- **Nuestra hipótesis inicial sobre la relevancia del ratio de inversión pública (*ratio_public_investment*) como un determinante clave de la *FDI* no se confirmó en los modelos estimados.** Esto sugiere que la infraestructura del estado, medida a través de esta variable, no es un factor determinante para la atracción de inversión extranjera en el contexto analizado.  
+
+En general, los resultados obtenidos proporcionan una visión clara de los principales factores que influyen en la atracción de inversión extranjera directa en México, destacando el papel del sector terciario, los salarios reales y la densidad poblacional como los elementos más relevantes para los inversionistas.
 
 ## Referencias
 Citar referencias usando formato APA
+
+**Deloitte. (2020).** Global Supply Chain and Network Transformation: A Strategy for the Future. Deloitte Insights.
+
+**McKinsey & Company. (2022).** Nearshoring: A Solution for U.S. Supply Chain Vulnerabilities. McKinsey Insights.
+
+**The Economist. (2022).** The Rise of Nearshoring in Mexico.
+
+**Moss, T. (2020).** Measuring the Impact of Nearshoring on Mexico’s Economy. Economía Mexicana, 29(2), 15-31.
+
+**Wooldrige, J. M. (2010).** Econometric Analysis of Cross Section and Panel Data. MIT Press.
 
