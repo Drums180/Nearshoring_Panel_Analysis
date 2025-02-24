@@ -28,48 +28,64 @@ knitr::include_graphics("Imagenes/Nearshoring-en-Mexico.jpg")
 
 ```{r Librerias, message=FALSE, warning=FALSE}
 # Manipulación y Transformación de Datos
-library(dplyr) # Manipulación y transformación de datos (filter, mutate, group_by, summarise)
-library(tidyr) # Organización y estructuración de datos en formato "tidy" (spread, gather, pivot_longer, pivot_wider)
-library(purrr) # Programación funcional y manejo de listas
-library(janitor) # Limpieza y formateo de datos (clean_names, remove_empty)
+library(dplyr)      # Manipulación y transformación de datos (filter, mutate, group_by, summarise)
+library(tidyr)      # Organización y estructuración de datos en formato "tidy" (spread, gather, pivot_longer, pivot_wider)
+library(purrr)      # Programación funcional y manejo de listas
+library(janitor)    # Limpieza y formateo de datos (clean_names, remove_empty)
 
 # Importación y Lectura de Archivos
-library(readr) # Lectura rápida de archivos de texto (CSV, TSV, etc.)
-library(readxl) # Importación de archivos Excel
+library(readr)      # Lectura rápida de archivos de texto (CSV, TSV, etc.)
+library(readxl)     # Importación de archivos Excel
 
 # Visualización de Datos y Gráficos
-library(ggplot2) # Creación de gráficos avanzados y personalizables
-library(reshape2) # Transformación de datos en diferentes estructuras para visualización
-library(corrplot) # Visualización de matrices de correlación
+library(ggplot2)    # Creación de gráficos avanzados y personalizables
+library(reshape2)   # Transformación de datos en diferentes estructuras para visualización
+library(corrplot)   # Visualización de matrices de correlación
 library(rpart.plot) # Visualización de árboles de decisión
 
 # Modelado y Análisis Estadístico
-library(rpart) # Modelos de árboles de decisión para clasificación y regresión
-library(plm) # Manejo de datos en formato de panel para modelos econométricos
+library(rpart)      # Modelos de árboles de decisión para clasificación y regresión
+library(plm)        # Manejo de datos en formato de panel para modelos econométricos
 
 # Manipulación de Cadenas de Texto
-library(stringr) # Manipulación de cadenas de texto (regex, detección de patrones, etc.)
-library(stringi) # Procesamiento avanzado de cadenas (Unicode, conteo de caracteres, etc.)
+library(stringr)    # Manipulación de cadenas de texto (regex, detección de patrones, etc.)
+library(stringi)    # Procesamiento avanzado de cadenas (Unicode, conteo de caracteres, etc.)
 
 # Manejo de Fechas y Tiempos
-library(lubridate) # Manipulación de fechas y tiempos en R
+library(lubridate)  # Manipulación de fechas y tiempos en R
 
 # Generación de Informes y Tablas en R Markdown
-library(knitr) # Creación de documentos dinámicos en R Markdown
+library(knitr)      # Creación de documentos dinámicos en R Markdown
 library(kableExtra) # Mejora del formato y estilo de las tablas generadas con knitr::kable
 
 # Geoespacial y Mapas
-library(sf) # Análisis y manipulación de datos espaciales en formato "Simple Features"
-library(rnaturalearth) # Obtención de mapas geoespaciales de todo el mundo
+library(sf)                # Análisis y manipulación de datos espaciales en formato "Simple Features"
+library(rnaturalearth)     # Obtención de mapas geoespaciales de todo el mundo
 library(rnaturalearthdata) # Conjunto de datos espaciales adicionales para mapas
 
 # Animaciones y Visualización Dinámica
-library(gganimate) # Creación de animaciones en gráficos de R
+library(gganimate)  # Creación de animaciones en gráficos de R
 library(transformr) # Transiciones suaves en animaciones con gganimate
 
-# Tests de Diagnostico
-library(lmtest)
-library(car)
+# Tests de Diagnóstico
+library(lmtest)     # Pruebas de diagnóstico para modelos estadísticos
+library(car)        # Funciones auxiliares para análisis estadístico y econométrico
+
+# Series de Tiempo y Análisis Avanzado
+library(xts)       # Manejo y análisis de series de tiempo (extensible)
+library(zoo)       # Infraestructura para series de tiempo irregulares
+library(tseries)   # Pruebas de hipótesis y análisis de series de tiempo
+library(stats)     # Funciones estadísticas básicas (incluye modelos ARIMA, etc.)
+library(forecast)  # Modelado y predicción de series de tiempo con modelos ARIMA y más
+library(astsa)     # Herramientas para análisis de series de tiempo (especialmente para ARIMA)
+library(AER)       # Recursos para econometría aplicada
+library(vars)      # Modelos VAR (vectores autoregresivos)
+library(dynlm)     # Modelos lineales dinámicos para series de tiempo
+library(mFilter)   # Filtros económicos para series de tiempo (como Hodrick-Prescott)
+library(TSstudio)  # Herramientas interactivas para explorar y analizar series de tiempo
+library(dygraphs)  # Visualización interactiva de series de tiempo
+library(quantmod)  # Modelado cuantitativo financiero y series de tiempo
+
 ```
 
 
@@ -77,24 +93,8 @@ library(car)
 
 #### Glosario:
 * **new_fdi:**	New Foreign Direct Investment Inflows. Millions of Dollars.  
-* **reinv_profits:**	Reinvestment of Profits - Foreign Direct Investment Inflows. Millions of Dollars.  
-* **intercom_acc:**	Intercompany Accounts - Foreign Direct Investment Inflows. Millions of Dollars.  
-* **total_fdi:**	Total Foreign Direct Investment Inflows. Millions of Dollars.  
-* **crime_rate:**	Crime rate per 100,000 state's population.  
-* **unemployment:**	Percentaje of unemployed population.  
-* **employment:** 	Percentaje of employed population.  
-* **business_activity:**	Index of economic activity weighted by the state's distance to nearest U.S. port of entry.  
-* **real_wage:**	Real wage using 2018 INPC = 100. MXN Pesos. 
-* **pop_density:**	Population per state's land area km2.  
-* **good_governance:**	Ratio between state's public investment and its public debt.  
-* **ratio_public_investment:**	Ratio between state's public investment and its gross domestic product (GDP).  
-* **lq_primary:**	Location quotient of employed people in primary industry.  
-* **lq_secondary:**	Location quotient of employed people in secondary sector.  
-* **lq_tertiary	Location:** quotient of employed people in tertiary sector.  
 * **exchange_rate:**	MXN pesos per 1 USD  
-* **patents_rate:**	Number of R&D patentes per 100,000 state's population  
 * **inpc:**	National Price Consumer Index. 2018 = 100  
-* **college_education:**	Percentage of population with at least high school education.
 * **exports_dollars:**	Value of exports. Thousands of dollars.
 
 
@@ -107,70 +107,86 @@ nearshoring_ts <- read_excel("panel_data.xlsx", sheet = "time series data")
 ## Introducción
 
 ## Visualización de Datos
-Dentro de la Visualización de datos contamos con un período anual y un partido en cuartos, es decir 3 meses de tiempo. Al mismo tiempo, observamos variables cuantitativas equivalentes a INPC, NEW_FDI_inflows y Exports, tres variables relacionadas directamente con el desarrollo económico del país durante el los períodos de tiempo expuestos.
 
 Preprocesamiento para formatear los cuartos para ser compatibles con TS
 ```{r}
-roman_to_numeric <- function(roman) {
-  sapply(roman, function(x) {
-    switch(x,
-      "I" = 1,
-      "II" = 2,
-      "III" = 3,
-      "IV" = 4,
-      NA  # En caso de que no se reconozca
-    )
-  })
-}
 
+nearshoring_ts$real_Mxn_New_FDI_Inflows = ((nearshoring_ts$New_FDI_Inflows * nearshoring_ts$Exchange_Rate) / nearshoring_ts$INPC)
 
-nearshoring_ts <- nearshoring_ts %>%
-  mutate(
-    quarter_num = roman_to_numeric(Quarter),
+nearshoring_ts$Quarter_formatted <- factor(nearshoring_ts$Quarter, 
+                                 levels = c("I", "II", "III", "IV"),
+                                 labels = c("Q1", "Q2", "Q3", "Q4"))
 
-    fecha_ts = as.yearqtr(paste(Year, quarter_num), format = "%Y %q")
-  )%>% select(-Quarter, -quarter_num)%>%rename(Quater = fecha_ts)
-  
+nearshoring_ts$yearqtr_str <- paste(nearshoring_ts$Year, nearshoring_ts$Quarter_formatted)
 
+# Convertir la cadena a un objeto yearqtr
+nearshoring_ts$yearqtr <- as.yearqtr(nearshoring_ts$yearqtr_str, format = "%Y Q%q")
+# Convertir el objeto yearqtr a una fecha.
+nearshoring_ts$date <- as.Date(nearshoring_ts$yearqtr, frac = 0)
+# Ordenar el data frame por la fecha recién creada
+nearshoring_ts <- nearshoring_ts[order(nearshoring_ts$date), ]
+# Paso 6: Crear el objeto xts usando la columna de fechas como índice
+NFDI_xts <- xts(nearshoring_ts$real_Mxn_New_FDI_Inflows, order.by = nearshoring_ts$date)
 
-print(df)
+plot(NFDI_xts)
+
 ```
 
-Primera serie de tiempo (Year, INPC)
-```{r}
-ggplot(nearshoring_ts, aes(x = Quater, y = INPC)) +
+
+```{r echo=FALSE}
+ggplot(nearshoring_ts, aes(x = yearqtr, y = INPC)) +
   geom_line(color = "darkgreen", size = 1) +
   labs(title = "Serie de Tiempo INPC",
        x = "Quater of total year",
        y = "INPC") +
   theme_minimal()
 ```
+
 INPC explicado mediante la división anual en cuartos, nos arroja una serie de tiempo con una tendencia claramente positiva y alcista, tomando en cuenta que no es en sutotalidad lineal, incluye momentos de desacelere en el crecimiento através del tiempo. Debido a esto, no es una serie estacionaria, ya que el indice promedio no muestra constancia, con un claro crecimiento. Aunque la gráfica no muestra una estacionalidad muy marcada, es importante realizar pruebas complementarias apra descartar esto. 
 
-```{r}
-ggplot(nearshoring_ts, aes(x = Quater, y = Exchange_Rate)) +
+```{r echo=FALSE}
+ggplot(nearshoring_ts, aes(x = yearqtr, y = Exchange_Rate)) +
   geom_line(color = "darkgreen", size = 1) +
   labs(title = "Serie de Tiempo Exchange rate",
        x = "Quater of total year",
        y = "Exchange rate") +
   theme_minimal()
 ```
+
 La serie muestra una tendencia ascendente con cariabilidad, tomandom una variable lineal en cuanto a su crecimiento, observamos ciertas fluctuaciones o desaceleres en su crecimiento, haciendo mucho más volátil este crecimiento. Se observan períodos de estabilidad, con un crecimiento en menor velocidad hasta el año 2015, lo que sugiere una estabilidad monetaria. Después toma un comportamiento creciente, lo que sugiere el deterioro de la moneda contra la moneda extranejera. Puede no tener presencia de estacionalidad gracias a la tendencia, pero es necesario verificar estacionariedad, ya que puede tener componentes cíclicos dentro del comportamiento de la misma. 
 
-```{r}
-ggplot(nearshoring_ts, aes(x = Quater, y = Exports)) +
+```{r echo=FALSE}
+ggplot(nearshoring_ts, aes(x = yearqtr, y = Exports)) +
   geom_line(color = "darkgreen", size = 1) +
   labs(title = "Serie de Tiempo Exports",
        x = "Quater of total year",
        y = "Exports") +
   theme_minimal()
 ```
+
 Observamos una tendencia ascendente, misma que sugiere el aumento en el valor de las exportaciones, al mismo tiempo sugiere una expansión en el crecimiento del sector en México. Observamos un crecimiento acelerado, con fluctuaciones claves y picos detectables, después del año 2022, observamos una volátilidad mayor, lo que genera más incertidumbre en el comercio internacional e inversiones dentro del país. Esta volatilidad sugiere la posible presencia de no estacionariedad y heterocedasticidad, características que requieren análisis estadísticos específicos."
 
 ## Estimación de Modelos de Series de Tiempo
+
+### ARMA
+```{r}
+summary(ARMA.cigar<-arma(nearshoring_ts$real_Mxn_New_FDI_Inflows, order=c(1,1)))
+```
+
+```{r}
+summary(modelo <- auto.arima(nearshoring_ts$real_Mxn_New_FDI_Inflows))
+```
+
+```{r}
+ts_diff <- diff(nearshoring_ts$real_Mxn_New_FDI_Inflows)
+auto.arima(ts_diff)
+```
+
+### VAR
+
 ```{r modelo VaR}
 # Seleccionar variables de interés
-nearshoring_ts_var <- nearshoring_ts[, c("INPC", "New_FDI_Inflows", "Exports")]
+nearshoring_ts_var <- nearshoring_ts[, c("INPC", "real_Mxn_New_FDI_Inflows", "Exports")]
 
 # Convertir a formato numérico para evitar errores
 nearshoring_ts_var <- as.data.frame(lapply(nearshoring_ts_var, as.numeric))
@@ -195,7 +211,23 @@ summary(var_model)
 granger_test <- causality(var_model, cause = "INPC")
 print(granger_test)
 ```
+
 ## Pruebas de Diagnostico
+```{r}
+adf.test(nearshoring_ts$real_Mxn_New_FDI_Inflows)
+```
+
+La prueba Dickey-Fuller (ADF) arrojó un valor p de 0.01; al ser inferior a 0.05, se rechaza la hipótesis nula de no estacionariedad, concluyendo que la serie en cuestión es estacionaria.
+
+
+```{r}
+acf(nearshoring_ts$real_Mxn_New_FDI_Inflows,main="Significant Autocorrelations")
+```
+
+La función de autocorrelación (ACF) no evidenció autocorrelación serial significativa, ya que desde el lag 1 todos los coeficientes se mantuvieron por debajo de los rangos de confianza. El lag 4 presentó el mayor nivel de ACF, pero sin alcanzar la significancia estadística.
+
+>**Nota:**    
+Dado que la serie es estacionaria, no es necesario aplicar transformaciones iniciales ni ajustar un modelo ARIMA para inducir estacionariedad. En este caso, se puede proceder directamente al análisis o al modelado ARMA y VAR.
 
 ## Selección de Modelo e Interpretación de Resultados
 
