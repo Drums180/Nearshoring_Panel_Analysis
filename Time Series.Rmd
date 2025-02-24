@@ -152,6 +152,7 @@ nearshoring_ts$log_real_mxn_new_fdi <- ifelse(
   -log(abs(nearshoring_ts$real_Mxn_New_FDI_Inflows))
 )
 
+ts_log <- as.ts(nearshoring_ts$log_real_mxn_new_fdi)
 ```
 
 
@@ -234,7 +235,7 @@ print(granger_test)
 
 ### ARMA - Log
 ```{r}
-summary(ARMA.fdilog<-arma(nearshoring_ts$log_real_mxn_new_fdi, order=c(1,1)))
+summary(ARMA_fdilog<-arima(ts_log, order=c(1,0,1)))
 ```
 
 ### Prueba diagnostico de modelos
@@ -249,6 +250,29 @@ serial.test(var_model, lags.pt = 2, type = "PT.adjusted")
 interpretación
 
 ## Selección de Modelo e Interpretación de Resultados
+
+```{r}
+summary(ARMA_fdilog2<-arima(NFDI_xts, order=c(1,0,1)))
+
+# Pronostico para los siguientes 4 periodos
+fc_log <- forecast(ARMA_fdilog2, h = 4)
+
+print(fc_log)
+plot(fc_log)
+
+print(fc_real)
+fc_real <- fc_log
+
+# Revertimos la transformación de las predicciones (media y los intervalos de confianza)
+fc_real$mean  <- ifelse(fc_log$mean >= 0, exp(fc_log$mean) - 1, -exp(abs(fc_log$mean)))
+fc_real$lower <- ifelse(fc_log$lower >= 0, exp(fc_log$lower) - 1, -exp(abs(fc_log$lower)))
+fc_real$upper <- ifelse(fc_log$upper >= 0, exp(fc_log$upper) - 1, -exp(abs(fc_log$upper)))
+
+fc_real$x <- ifelse(fc_log$x >= 0, exp(fc_log$x) - 1, -exp(abs(fc_log$x)))
+
+# Visualiza el pronóstico con una gráfica
+plot(fc_real, main = "Pronóstico ARMA(1,1)")
+```
 
 ## Conclusiones 
 
