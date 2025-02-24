@@ -144,6 +144,15 @@ NFDI_xts <- xts(nearshoring_ts$real_Mxn_New_FDI_Inflows, order.by = nearshoring_
 plot(NFDI_xts)
 
 ```
+```{r}
+# Convertir variables con negativos a log
+nearshoring_ts$log_real_mxn_new_fdi <- ifelse(
+  nearshoring_ts$real_Mxn_New_FDI_Inflows >= 0,
+  log(nearshoring_ts$real_Mxn_New_FDI_Inflows + 1),
+  -log(abs(nearshoring_ts$real_Mxn_New_FDI_Inflows))
+)
+
+```
 
 
 ```{r echo=FALSE}
@@ -179,59 +188,12 @@ ggplot(nearshoring_ts, aes(x = yearqtr, y = Exports)) +
 
 Observamos una tendencia ascendente, misma que sugiere el aumento en el valor de las exportaciones, al mismo tiempo sugiere una expansión en el crecimiento del sector en México. Observamos un crecimiento acelerado, con fluctuaciones claves y picos detectables, después del año 2022, observamos una volátilidad mayor, lo que genera más incertidumbre en el comercio internacional e inversiones dentro del país. Esta volatilidad sugiere la posible presencia de no estacionariedad y heterocedasticidad, características que requieren análisis estadísticos específicos."
 
-## Estimación de Modelos de Series de Tiempo
-
-### ARMA
-```{r}
-summary(ARMA.cigar<-arma(nearshoring_ts$real_Mxn_New_FDI_Inflows, order=c(1,1)))
-```
-
-```{r}
-summary(modelo <- auto.arima(nearshoring_ts$real_Mxn_New_FDI_Inflows))
-```
-
-```{r}
-ts_diff <- diff(nearshoring_ts$real_Mxn_New_FDI_Inflows)
-auto.arima(ts_diff)
-```
-
-### VAR
-
-```{r modelo VaR}
-# Seleccionar variables de interés
-nearshoring_ts_var <- nearshoring_ts[, c("INPC", "real_Mxn_New_FDI_Inflows", "Exports")]
-
-# Convertir a formato numérico para evitar errores
-nearshoring_ts_var <- as.data.frame(lapply(nearshoring_ts_var, as.numeric))
-
-# Verificar estacionariedad con la prueba de Dickey-Fuller
-adf_tests <- lapply(nearshoring_ts_var, function(x) adf.test(na.omit(x))$p.value)
-
-# Aplicar primera diferencia si las series no son estacionarias
-nearshoring_ts_var_diff <- as.data.frame(lapply(nearshoring_ts_var, function(x) diff(na.omit(x))))
-
-# Determinar el número óptimo de rezagos
-lag_selection <- VARselect(nearshoring_ts_var_diff, lag.max = 8, type = "const")
-optimal_lag <- as.integer(lag_selection$selection["AIC(n)"])
-
-# Ajustar el modelo VAR
-var_model <- VAR(nearshoring_ts_var_diff, p = optimal_lag, type = "const")
-
-# Mostrar resumen del modelo
-summary(var_model)
-
-# Prueba de causalidad de Granger
-granger_test <- causality(var_model, cause = "INPC")
-print(granger_test)
-```
-
-## Pruebas de Diagnostico
+## Pruebas de Diagnostico Iniciales
 ```{r}
 adf.test(nearshoring_ts$real_Mxn_New_FDI_Inflows)
 ```
 
 La prueba Dickey-Fuller (ADF) arrojó un valor p de 0.01; al ser inferior a 0.05, se rechaza la hipótesis nula de no estacionariedad, concluyendo que la serie en cuestión es estacionaria.
-
 
 ```{r}
 acf(nearshoring_ts$real_Mxn_New_FDI_Inflows,main="Significant Autocorrelations")
@@ -241,6 +203,50 @@ La función de autocorrelación (ACF) no evidenció autocorrelación serial sign
 
 >**Nota:**    
 Dado que la serie es estacionaria, no es necesario aplicar transformaciones iniciales ni ajustar un modelo ARIMA para inducir estacionariedad. En este caso, se puede proceder directamente al análisis o al modelado ARMA y VAR.
+
+
+## Estimación de Modelos de Series de Tiempo
+
+### ARMA
+```{r}
+summary(ARMA.fdi<-arma(nearshoring_ts$real_Mxn_New_FDI_Inflows, order=c(1,1)))
+```
+
+```{r}
+summary(autoarima <- auto.arima(nearshoring_ts$real_Mxn_New_FDI_Inflows))
+```
+
+### VAR
+```{r modelo VaR}
+# Seleccionar variables de interés
+nearshoring_ts_var <- nearshoring_ts[, c("log_real_mxn_new_fdi", "Exchange_Rate")]
+
+# Ajustar el modelo VAR
+var_model <- VAR(nearshoring_ts_var, p = 2, type = "const")
+
+# Mostrar resumen del modelo
+summary(var_model)
+
+# Prueba de causalidad de Granger
+granger_test <- causality(var_model, cause = "Exchange_Rate")
+print(granger_test)
+```
+
+### ARMA - Log
+```{r}
+summary(ARMA.fdilog<-arma(nearshoring_ts$log_real_mxn_new_fdi, order=c(1,1)))
+```
+
+### Prueba diagnostico de modelos
+```{r}
+# Medir la autocorrelacion serial de los errores en modelo arma
+Box.test(residuals(ARMA.fdilog), lag = 1, type = "Ljung-Box")
+
+# Medir la autocorrelacion serial de los errores en modelo var
+serial.test(var_model, lags.pt = 2, type = "PT.adjusted")
+```
+  
+interpretación
 
 ## Selección de Modelo e Interpretación de Resultados
 
