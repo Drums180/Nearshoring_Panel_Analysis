@@ -138,7 +138,7 @@ print(df)
 
 Primera serie de tiempo (Year, INPC)
 ```{r}
-ggplot(df, aes(x = Quater, y = INPC)) +
+ggplot(nearshoring_ts, aes(x = Quater, y = INPC)) +
   geom_line(color = "darkgreen", size = 1) +
   labs(title = "Serie de Tiempo INPC",
        x = "Quater of total year",
@@ -148,7 +148,7 @@ ggplot(df, aes(x = Quater, y = INPC)) +
 INPC explicado mediante la división anual en cuartos, nos arroja una serie de tiempo con una tendencia claramente positiva y alcista, tomando en cuenta que no es en sutotalidad lineal, incluye momentos de desacelere en el crecimiento através del tiempo. Debido a esto, no es una serie estacionaria, ya que el indice promedio no muestra constancia, con un claro crecimiento. Aunque la gráfica no muestra una estacionalidad muy marcada, es importante realizar pruebas complementarias apra descartar esto. 
 
 ```{r}
-ggplot(df, aes(x = Quater, y = Exchange_Rate)) +
+ggplot(nearshoring_ts, aes(x = Quater, y = Exchange_Rate)) +
   geom_line(color = "darkgreen", size = 1) +
   labs(title = "Serie de Tiempo Exchange rate",
        x = "Quater of total year",
@@ -158,7 +158,7 @@ ggplot(df, aes(x = Quater, y = Exchange_Rate)) +
 La serie muestra una tendencia ascendente con cariabilidad, tomandom una variable lineal en cuanto a su crecimiento, observamos ciertas fluctuaciones o desaceleres en su crecimiento, haciendo mucho más volátil este crecimiento. Se observan períodos de estabilidad, con un crecimiento en menor velocidad hasta el año 2015, lo que sugiere una estabilidad monetaria. Después toma un comportamiento creciente, lo que sugiere el deterioro de la moneda contra la moneda extranejera. Puede no tener presencia de estacionalidad gracias a la tendencia, pero es necesario verificar estacionariedad, ya que puede tener componentes cíclicos dentro del comportamiento de la misma. 
 
 ```{r}
-ggplot(df, aes(x = Quater, y = Exports)) +
+ggplot(nearshoring_ts, aes(x = Quater, y = Exports)) +
   geom_line(color = "darkgreen", size = 1) +
   labs(title = "Serie de Tiempo Exports",
        x = "Quater of total year",
@@ -168,7 +168,33 @@ ggplot(df, aes(x = Quater, y = Exports)) +
 Observamos una tendencia ascendente, misma que sugiere el aumento en el valor de las exportaciones, al mismo tiempo sugiere una expansión en el crecimiento del sector en México. Observamos un crecimiento acelerado, con fluctuaciones claves y picos detectables, después del año 2022, observamos una volátilidad mayor, lo que genera más incertidumbre en el comercio internacional e inversiones dentro del país. Esta volatilidad sugiere la posible presencia de no estacionariedad y heterocedasticidad, características que requieren análisis estadísticos específicos."
 
 ## Estimación de Modelos de Series de Tiempo
+```{r modelo VaR}
+# Seleccionar variables de interés
+nearshoring_ts_var <- nearshoring_ts[, c("INPC", "New_FDI_Inflows", "Exports")]
 
+# Convertir a formato numérico para evitar errores
+nearshoring_ts_var <- as.data.frame(lapply(nearshoring_ts_var, as.numeric))
+
+# Verificar estacionariedad con la prueba de Dickey-Fuller
+adf_tests <- lapply(nearshoring_ts_var, function(x) adf.test(na.omit(x))$p.value)
+
+# Aplicar primera diferencia si las series no son estacionarias
+nearshoring_ts_var_diff <- as.data.frame(lapply(nearshoring_ts_var, function(x) diff(na.omit(x))))
+
+# Determinar el número óptimo de rezagos
+lag_selection <- VARselect(nearshoring_ts_var_diff, lag.max = 8, type = "const")
+optimal_lag <- as.integer(lag_selection$selection["AIC(n)"])
+
+# Ajustar el modelo VAR
+var_model <- VAR(nearshoring_ts_var_diff, p = optimal_lag, type = "const")
+
+# Mostrar resumen del modelo
+summary(var_model)
+
+# Prueba de causalidad de Granger
+granger_test <- causality(var_model, cause = "INPC")
+print(granger_test)
+```
 ## Pruebas de Diagnostico
 
 ## Selección de Modelo e Interpretación de Resultados
