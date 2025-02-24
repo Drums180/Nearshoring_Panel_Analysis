@@ -36,12 +36,6 @@ Finalmente, se presentará una comparación entre los valores actuales de invers
 ## Librerias
 
 ```{r Librerias, message=FALSE, warning=FALSE}
-# Manipulación y Transformación de Datos
-library(dplyr) # Manipulación y transformación de datos (filter, mutate, group_by, summarise)
-library(tidyr) # Organización y estructuración de datos en formato "tidy" (spread, gather, pivot_longer, pivot_wider)
-library(purrr) # Programación funcional y manejo de listas
-library(janitor) # Limpieza y formateo de datos (clean_names, remove_empty)
-
 # Importación y Lectura de Archivos
 library(readr) # Lectura rápida de archivos de texto (CSV, TSV, etc.)
 library(readxl) # Importación de archivos Excel
@@ -83,6 +77,12 @@ library(lmtest) # Prueba de modelos de regresión lineal
 library(car) # Compañero de regresión aplicada para VIF
 library(sandwich) # Software orientado a objetos para estimadores de matrices de covarianza robustos al modelo
 library(stargazer) # Comparacion de modelos
+
+# Manipulación y Transformación de Datos
+library(tidyr) # Organización y estructuración de datos en formato "tidy" (spread, gather, pivot_longer, pivot_wider)
+library(purrr) # Programación funcional y manejo de listas
+library(janitor) # Limpieza y formateo de datos (clean_names, remove_empty)
+library(dplyr) # Manipulación y transformación de datos (filter, mutate, group_by, summarise)
 ```
 
 ## Dataset
@@ -142,7 +142,7 @@ nearshoring <- nearshoring %>%
 
 # Subset solo con variables reales en MXN (sin dólares)
 nearshoring_clean <- nearshoring %>%
-  select(
+  dplyr::select(
     state, year, region_name, region_num,
     real_mxn_new_fdi, real_mxn_reinv_profits, real_mxn_intercom_acc,
     real_mxn_total_fdi, real_wage, real_mxn_exports_miles_dlls,
