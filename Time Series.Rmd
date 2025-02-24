@@ -60,8 +60,8 @@ library(kableExtra) # Mejora del formato y estilo de las tablas generadas con kn
 
 # Geoespacial y Mapas
 library(sf)                # Análisis y manipulación de datos espaciales en formato "Simple Features"
-library(rnaturalearth)     # Obtención de mapas geoespaciales de todo el mundo
-library(rnaturalearthdata) # Conjunto de datos espaciales adicionales para mapas
+#library(rnaturalearth)     # Obtención de mapas geoespaciales de todo el mundo
+#library(rnaturalearthdata) # Conjunto de datos espaciales adicionales para mapas
 
 # Animaciones y Visualización Dinámica
 library(gganimate)  # Creación de animaciones en gráficos de R
@@ -105,7 +105,20 @@ nearshoring_ts <- read_excel("panel_data.xlsx", sheet = "time series data")
 
 
 ## Introducción
+#### 1. Describir las principales características de una base de datos de series de tiempo.
+<div align="justify">
+*   **Optimización para datos temporales:** Cada registro contiene una marca de tiempo que funciona como índice principal, lo que facilita su recuperación y el análisis de datos en relación al tiempo.
 
+*   **Manejo de series temporales irregulares y regulares:** Es posible gestionar datos con intervalos de tiempo constantes o variables adaptándose a las distintas necesidades de aplicación.
+
+*   **Integración con herramientas de monitoreo y anáisis en tiempo real:** Se integran fácilmente con sistemas que requieran análisis en tiempo real, como aplicaciones financieras, dispositivos IoT y monitoreo de infraestructura.
+</div>
+
+#### 2. Brevemente describir cómo el análisis de datos de series de tiempo puede contribuir a pronosticar cambios y/o patrones en los flujos de inversión extranjera directa (IED) asociadas con descisiones de "Nearshoring" para el caso de México.
+
+<div align="justify">
+El enfoque de los cambios y patrones en los flujos de Inversión Extranjera Directa permiten identificar tendencias y ciclos en la misma a lo largo del tiempo, facilitando la comprensión de cómo factores económicos y políticos tienen influencia en la relocalización de cadenas productivas hacia México. Datos recientes muestran aumentos significativos en la IED hacia industrias beneficiadas por el nearshoring, destacando estados como Nuevo León y Aguascalientes. Sin embargo, la IED no siempre refleja por completo el fenómeno, ya que algunas empresas financian sus expansiones con recursos locales o modelos alternativos. Para verlo de forma más amplia, es recomendable combinar el análisis de series de tiempo con métricas distintas como puede ser la actividad exportadora.
+</div>
 ## Visualización de Datos
 
 Preprocesamiento para formatear los cuartos para ser compatibles con TS
