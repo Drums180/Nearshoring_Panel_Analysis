@@ -105,6 +105,7 @@ nearshoring_ts <- read_excel("panel_data.xlsx", sheet = "time series data")
 
 
 ## Introducción
+
 #### 1. Describir las principales características de una base de datos de series de tiempo.
 <div align="justify">
 *   **Optimización para datos temporales:** Cada registro contiene una marca de tiempo que funciona como índice principal, lo que facilita su recuperación y el análisis de datos en relación al tiempo.
@@ -120,7 +121,6 @@ nearshoring_ts <- read_excel("panel_data.xlsx", sheet = "time series data")
 El enfoque de los cambios y patrones en los flujos de Inversión Extranjera Directa permiten identificar tendencias y ciclos en la misma a lo largo del tiempo, facilitando la comprensión de cómo factores económicos y políticos tienen influencia en la relocalización de cadenas productivas hacia México. Datos recientes muestran aumentos significativos en la IED hacia industrias beneficiadas por el nearshoring, destacando estados como Nuevo León y Aguascalientes. Sin embargo, la IED no siempre refleja por completo el fenómeno, ya que algunas empresas financian sus expansiones con recursos locales o modelos alternativos. Para verlo de forma más amplia, es recomendable combinar el análisis de series de tiempo con métricas distintas como puede ser la actividad exportadora.
 </div>
 ## Visualización de Datos
-
 Preprocesamiento para formatear los cuartos para ser compatibles con TS
 ```{r}
 
@@ -238,10 +238,15 @@ print(granger_test)
 summary(ARMA_fdilog<-arima(ts_log, order=c(1,0,1)))
 ```
 
+### Panel VAR
+```{r}
+
+```
+
 ### Prueba diagnostico de modelos
 ```{r}
 # Medir la autocorrelacion serial de los errores en modelo arma
-Box.test(residuals(ARMA.fdilog), lag = 1, type = "Ljung-Box")
+Box.test(residuals(ARMA_fdilog), lag = 1, type = "Ljung-Box")
 
 # Medir la autocorrelacion serial de los errores en modelo var
 serial.test(var_model, lags.pt = 2, type = "PT.adjusted")
@@ -255,12 +260,22 @@ interpretación
 summary(ARMA_fdilog2<-arima(NFDI_xts, order=c(1,0,1)))
 
 # Pronostico para los siguientes 4 periodos
-fc_log <- forecast(ARMA_fdilog2, h = 4)
+fc <- forecast(ARMA_fdilog2, h = 4)
 
+# Visualiza el pronóstico con una gráfica
+print(fc)
+plot(fc)
+```
+
+```{r}
+fc_log <- forecast(ARMA_fdilog, h = 4)
+
+# Visualiza el pronóstico con una gráfica
 print(fc_log)
-plot(fc_log)
+plot(fc_log, main = "Pronóstico LOG ARMA(1,1)")
+```
 
-print(fc_real)
+```{r}
 fc_real <- fc_log
 
 # Revertimos la transformación de las predicciones (media y los intervalos de confianza)
@@ -270,11 +285,15 @@ fc_real$upper <- ifelse(fc_log$upper >= 0, exp(fc_log$upper) - 1, -exp(abs(fc_lo
 
 fc_real$x <- ifelse(fc_log$x >= 0, exp(fc_log$x) - 1, -exp(abs(fc_log$x)))
 
-# Visualiza el pronóstico con una gráfica
+
+print(fc_real)
 plot(fc_real, main = "Pronóstico ARMA(1,1)")
 ```
 
+
 ## Conclusiones 
+
+
 
 ## Referencias 
 
