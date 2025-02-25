@@ -120,6 +120,7 @@ nearshoring_ts <- read_excel("panel_data.xlsx", sheet = "time series data")
 <div align="justify">
 El enfoque de los cambios y patrones en los flujos de Inversión Extranjera Directa permiten identificar tendencias y ciclos en la misma a lo largo del tiempo, facilitando la comprensión de cómo factores económicos y políticos tienen influencia en la relocalización de cadenas productivas hacia México. Datos recientes muestran aumentos significativos en la IED hacia industrias beneficiadas por el nearshoring, destacando estados como Nuevo León y Aguascalientes. Sin embargo, la IED no siempre refleja por completo el fenómeno, ya que algunas empresas financian sus expansiones con recursos locales o modelos alternativos. Para verlo de forma más amplia, es recomendable combinar el análisis de series de tiempo con métricas distintas como puede ser la actividad exportadora.
 </div>
+
 ## Visualización de Datos
 Preprocesamiento para formatear los cuartos para ser compatibles con TS
 ```{r}
@@ -194,7 +195,7 @@ Observamos una tendencia ascendente, misma que sugiere el aumento en el valor de
 adf.test(nearshoring_ts$real_Mxn_New_FDI_Inflows)
 ```
 
-La prueba Dickey-Fuller (ADF) arrojó un valor p de 0.01; al ser inferior a 0.05, se rechaza la hipótesis nula de no estacionariedad, concluyendo que la serie en cuestión es estacionaria.
+La prueba Dickey-Fuller (ADF) arrojó un valor p de 0.01, al ser inferior a 0.05, se rechaza la hipótesis nula de no estacionariedad, concluyendo que la serie en cuestión es estacionaria.
 
 ```{r}
 acf(nearshoring_ts$real_Mxn_New_FDI_Inflows,main="Significant Autocorrelations")
@@ -238,12 +239,7 @@ print(granger_test)
 summary(ARMA_fdilog<-arima(ts_log, order=c(1,0,1)))
 ```
 
-### Panel VAR
-```{r}
-
-```
-
-### Prueba diagnostico de modelos
+## Pruebas de Diagnostico
 ```{r}
 # Medir la autocorrelacion serial de los errores en modelo arma
 Box.test(residuals(ARMA_fdilog), lag = 1, type = "Ljung-Box")
@@ -275,25 +271,84 @@ print(fc_log)
 plot(fc_log, main = "Pronóstico LOG ARMA(1,1)")
 ```
 
+### Modelo Seleccionado y Predicción
+
 ```{r}
+# Ratio Method
+fc_log <- forecast(ARMA_fdilog, h = 4)
 fc_real <- fc_log
 
-# Revertimos la transformación de las predicciones (media y los intervalos de confianza)
-fc_real$mean  <- ifelse(fc_log$mean >= 0, exp(fc_log$mean) - 1, -exp(abs(fc_log$mean)))
-fc_real$lower <- ifelse(fc_log$lower >= 0, exp(fc_log$lower) - 1, -exp(abs(fc_log$lower)))
-fc_real$upper <- ifelse(fc_log$upper >= 0, exp(fc_log$upper) - 1, -exp(abs(fc_log$upper)))
+# Revertimos la transformación de la media
+fc_real$mean  <- exp(fc_log$mean) - 1
 
-fc_real$x <- ifelse(fc_log$x >= 0, exp(fc_log$x) - 1, -exp(abs(fc_log$x)))
+# Aplicamos la transformación del ratio usando la proporción del valor real
+fc_real$lower <- (fc_real$mean * (fc_log$lower / fc_log$mean))
+fc_real$upper <- (fc_real$mean * (fc_log$upper / fc_log$mean))
 
+# Revertimos la transformación en la serie original
+fc_real$x <- exp(fc_log$x) - 1
 
+# Mostrar resultados
 print(fc_real)
-plot(fc_real, main = "Pronóstico ARMA(1,1)")
+plot(fc_real, main = "Pronóstico ARMA(1,1) - Ratio Method")
 ```
 
+#### Describir cómo es la tendencia del pronóstico de la(s) serie(s) de tiempo de la(s) variable(s) seleccionadas para los siguientes 4 períodos.
+
+La tendencia de la serie de tiempo **muestra fluctuaciones moderadas en los siguientes cuatro períodos**, con un **leve crecimiento en el segundo período seguido de una ligera reducción** en los valores pronosticados:
+
+- **Primer período (t=75)**: Se espera un valor de **236.40**, con un intervalo del **80% entre 124.69 y 348.11**, y del **95% entre 65.55 y 407.24**.
+- **Segundo período (t=76)**: Aumento a **335.01**, con intervalos más amplios (**80%: 183.75 - 486.26**, **95%: 103.68 - 566.33**).
+- **Tercer período (t=77)**: Descenso a **289.77**, con menor dispersión en los intervalos.
+- **Cuarto período (t=78)**: Recuperación a **307.81**, aunque dentro de un rango incierto.
+
+En general, el modelo predice valores **sin una tendencia definida**, pero con **una variabilidad controlada** dentro de los intervalos de confianza.
+
+
+
+#### De acuerdo al pronóstico anterior, ¿cómo es el escenario optimista vs. escenario pesimista del posible “Nearshoring” para el caso de México?
+
+- **Escenario optimista** 📈  
+  - Si el nearshoring sigue impulsando la IED, **los valores podrían acercarse o superar los límites superiores de los intervalos de confianza**.
+  - Un **escenario con estabilidad macroeconómica y políticas favorables** podría situar la IED cerca de los **486.26 - 566.33 millones** en el segundo período, favoreciendo el crecimiento del sector manufacturero.
+  - La recuperación en el cuarto período sugiere que, **bajo condiciones óptimas**, el nearshoring podría sostener niveles de inversión estables a mediano plazo.
+
+- **Escenario pesimista** 📉  
+  - En caso de **incertidumbre económica, cambios en regulaciones o pérdida de confianza**, la IED podría acercarse a los **límites inferiores**, con valores cercanos a **65.55 - 183.75 millones**.
+  - Un patrón de **volatilidad en las exportaciones o depreciación del peso** podría reducir el atractivo del nearshoring en México.
+  - La posible caída en el tercer período sugiere **riesgo de reversión del crecimiento** si no hay estabilidad en la demanda global.
+
+El **escenario optimista implica estabilidad y crecimiento** en la IED, mientras que el **escenario pesimista refleja riesgos de desaceleración y baja inversión** aunque ambos mostrandose dentro de un escenario conservador.
+
+
+
+#### El desempeño del flujo de nuevos flujos de IED exhiben la presencia de un cambio estructural durante el período de análisis?
+
+No, el desempeño de los flujos de IED en general **no sugiere la presencia de un cambio estructural claro y consistente** a lo largo de la serie, aunque ciertos períodos muestran fluctuaciones abruptas que podrían estar asociadas con factores externos o ajustes en la estrategia de inversión:
+
+- **Eventos exógenos y ajustes empresariales:** Se observan **picos y caídas abruptas** en años como 2013 y 2021, lo que podría indicar **shocks externos** o **reconfiguraciones en los patrones de inversión** en respuesta a cambios en la economía global.
+- **Resultados de la prueba ADF:** La estacionariedad de la serie implica que **no hay una tendencia de largo plazo claramente definida**, aunque la inversión podría responder a **perturbaciones externas no incluidas en el modelo**.
+- **Análisis de autocorrelación (ACF):** No se identifican patrones fuertes más allá del primer rezago, lo que sugiere que la IED **no sigue un comportamiento cíclico definido** y que las variaciones pueden ser más esporádicas que estructurales.
+- **Resultados del modelo VAR:** No se encontró **evidencia significativa de causalidad** entre el tipo de cambio y la IED, lo que indica que cualquier relación entre ambas variables podría ser **indirecta o depender de otros factores macroeconómicos**.
+
+Aunque **no hay evidencia contundente de un cambio estructural en toda la serie**, algunas fluctuaciones justifican un análisis más detallado. **Aplicar una prueba de Chow** podría ayudar a evaluar directamente la existencia de posibles cambios estructurales en períodos clave.
 
 ## Conclusiones 
-El modelo ARMA(1,1) no muestra una estructura fuerte de predicción. Aunque la serie de tiempo parece estacionaria, su estructura no presenta patrones claros de dependencia, aparte se encontro que el tipo de cambio no parece ser un predictor significativo de los flujos de IED. No se encontró evidencia de causalidad de Granger ni de relación fuerte en el modelo VAR. Los pronosticos muestran una estructura inusual debido a que se tuvo que transformar las variables con el proposito de poder realizar el analisis, ya que sin ello las variables presentaban altas incertidumbres y errores en el modelo. Este modelo permite realizar pronósticos confiables a corto plazo, proporcionando herramientas útiles para la toma de decisiones en materia de inversión extranjera.
 
+- **IED y nearshoring:** No se identificó un cambio estructural claro en la IED, aunque ciertos períodos exhibieron fluctuaciones abruptas, posiblemente relacionadas con eventos exógenos. La proyección a corto plazo indica **variabilidad moderada sin una tendencia definida**, lo que refleja la incertidumbre inherente al nearshoring. 
+
+- **Tipo de cambio y exportaciones:** Se observó una **tendencia creciente en el tipo de cambio**, con períodos de relativa estabilidad seguidos de aumentos significativos. Las exportaciones, en cambio, **mostraron un crecimiento sostenido**, lo que respalda la idea de que México ha fortalecido su papel en la cadena global de suministro.  
+
+- **Estacionariedad y pronósticos:** La prueba ADF confirmó la **estacionariedad en la serie de IED**, lo que permitió el uso de modelos ARMA sin diferenciación. La proyección con **ARMA(1,1)** ofrece **un panorama razonablemente estable**, aunque con márgenes de incertidumbre en los escenarios optimistas y pesimistas.  
+
+Los pronósticos obtenidos **presentan una estructura inusual**, en gran parte debido a la transformación de variables necesaria para el análisis. Sin estas transformaciones, **las variables mostraban alta incertidumbre y errores significativos en los modelos**, lo que dificultaba obtener predicciones confiables. Sin embargo, dentro de estas limitaciones, el modelo ARMA(1,1) permite **realizar pronósticos confiables a corto plazo**, proporcionando herramientas útiles para la toma de decisiones en materia de inversión extranjera.  
+
+En el futuro, complementar este estudio con un análisis Panel-VAR permitiría una interpretación más robusta, integrando **tanto la dimensión temporal como la heterogeneidad entre observaciones**, logrando un balance entre **patrones generales y detalles específicos** de los flujos de inversión en México.  
 
 ## Referencias 
 
+Comisión Económica para América Latina y el Caribe (CEPAL). (2022). México en la fábrica de América del Norte y el nearshoring. Recuperado de https://repositorio.cepal.org/bitstream/handle/11362/48056/1/S2200726_es.pdf
+
+Lütkepohl, H. (2005). New Introduction to Multiple Time Series Analysis. Springer.
+
+Morales, V. (s.f.). Modelización de Series Multivariantes: VAR & VEC. Recuperado de https://bookdown.org/victor_morales/SeriesdeTiempo/modelizaci%C3%B3n-de-series-multivariantes-var-vec.html
