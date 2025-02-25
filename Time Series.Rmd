@@ -252,7 +252,7 @@ Box.test(residuals(ARMA_fdilog), lag = 1, type = "Ljung-Box")
 serial.test(var_model, lags.pt = 2, type = "PT.adjusted")
 ```
   
-interpretación
+Se elegio el Arma ya que la prueba de Dickey-Fuller Aumentada  mostró que la serie de tiempo es estacionaria, esto significa que no hay una tendencia fuerte y que el proceso es adecuado para un modelo ARMA sin diferenciar la serie. Tambien, ACF y el PACF sugieren una estructura de correlación en la serie, lo que justifica el uso de un modelo ARMA en lugar de una regresión simple.
 
 ## Selección de Modelo e Interpretación de Resultados
 
@@ -292,7 +292,7 @@ plot(fc_real, main = "Pronóstico ARMA(1,1)")
 
 
 ## Conclusiones 
-
+El modelo ARMA(1,1) no muestra una estructura fuerte de predicción. Aunque la serie de tiempo parece estacionaria, su estructura no presenta patrones claros de dependencia, aparte se encontro que el tipo de cambio no parece ser un predictor significativo de los flujos de IED. No se encontró evidencia de causalidad de Granger ni de relación fuerte en el modelo VAR. Los pronosticos muestran una estructura inusual debido a que se tuvo que transformar las variables con el proposito de poder realizar el analisis, ya que sin ello las variables presentaban altas incertidumbres y errores en el modelo. Este modelo permite realizar pronósticos confiables a corto plazo, proporcionando herramientas útiles para la toma de decisiones en materia de inversión extranjera.
 
 
 ## Referencias 
