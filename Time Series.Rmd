@@ -220,16 +220,25 @@ summary(autoarima <- auto.arima(nearshoring_ts$real_Mxn_New_FDI_Inflows))
 ### VAR
 ```{r modelo VaR}
 # Seleccionar variables de interés
-nearshoring_ts_var <- nearshoring_ts[, c("log_real_mxn_new_fdi", "Exchange_Rate")]
+nearshoring_ts_var <- nearshoring_ts[, c("real_Mxn_New_FDI_Inflows", "Exports")]
 
-# Ajustar el modelo VAR
-var_model <- VAR(nearshoring_ts_var, p = 2, type = "const")
+# Convertir a formato numérico para evitar errores
+nearshoring_ts_var <- as.data.frame(lapply(nearshoring_ts_var, as.numeric))
+
+# Verificar estacionariedad con la prueba de Dickey-Fuller
+adf_tests <- lapply(nearshoring_ts_var, function(x) adf.test(na.omit(x))$p.value)
+
+# Aplicar primera diferencia si las series no son estacionarias
+nearshoring_ts_var_diff <- as.data.frame(lapply(nearshoring_ts_var, function(x) diff(na.omit(x))))
+
+# Ajustar el modelo VAR con 2 rezagos
+var_model <- VAR(nearshoring_ts_var_diff, p = 2, type = "const")
 
 # Mostrar resumen del modelo
 summary(var_model)
 
 # Prueba de causalidad de Granger
-granger_test <- causality(var_model, cause = "Exchange_Rate")
+granger_test <- causality(var_model, cause = "real_Mxn_New_FDI_Inflows")
 print(granger_test)
 ```
 
