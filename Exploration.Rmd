@@ -68,12 +68,6 @@ Observaciones repetidas, Mayor capacidad explicativa, Control de heterogeneidad 
 ## Librerias
 
 ```{r Librerias, message=FALSE, warning=FALSE}
-# Manipulación y Transformación de Datos
-library(dplyr)       # Manipulación y transformación de datos (filter, mutate, group_by, summarise)
-library(tidyr)       # Organización y estructuración de datos en formato "tidy" (spread, gather, pivot_longer, pivot_wider)
-library(purrr)       # Programación funcional y manejo de listas
-library(janitor)     # Limpieza y formateo de datos (clean_names, remove_empty)
-
 # Importación y Lectura de Archivos
 library(readr)       # Lectura rápida de archivos de texto (CSV, TSV, etc.)
 library(readxl)      # Importación de archivos Excel
@@ -107,6 +101,12 @@ library(rnaturalearthdata)    # Conjunto de datos espaciales adicionales para ma
 # Animaciones y Visualización Dinámica
 library(gganimate)   # Creación de animaciones en gráficos de R
 library(transformr)  # Transiciones suaves en animaciones con gganimate
+
+# Manipulación y Transformación de Datos
+library(tidyr)       # Organización y estructuración de datos en formato "tidy" (spread, gather, pivot_longer, pivot_wider)
+library(purrr)       # Programación funcional y manejo de listas
+library(janitor)     # Limpieza y formateo de datos (clean_names, remove_empty)
+library(dplyr)       # Manipulación y transformación de datos (filter, mutate, group_by, summarise)
 ```
 
 ## Dataset

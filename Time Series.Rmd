@@ -98,11 +98,67 @@ library(quantmod)  # Modelado cuantitativo financiero y series de tiempo
 * **exports_dollars:**	Value of exports. Thousands of dollars.
 
 
-```{r Dataset, message=FALSE, warning=FALSE, include=FALSE}
+```{r Dataset TS, message=FALSE, warning=FALSE, include=FALSE}
 # Read the Excel file
 nearshoring_ts <- read_excel("panel_data.xlsx", sheet = "time series data")
 ```
 
+```{r Dataset Panel, message=FALSE, warning=FALSE, include=FALSE}
+# Read the Excel file
+nearshoring <- read_excel("panel_data.xlsx")
+
+# Renombrar columnas
+nearshoring <- nearshoring %>%
+  rename(
+    region_name = `region...23`,
+    region_num = `region...24`
+  )
+```
+
+```{r Modifications, message=FALSE, warning=FALSE, include=FALSE}
+# Convertir valores de USD a MXN
+nearshoring <- nearshoring %>%
+  mutate(across(c(new_fdi, reinv_profits, intercom_acc, total_fdi, exports_miles_dlls),
+    ~ . * exchange_rate,
+    .names = "mxn_{.col}"
+  ))
+
+# Ajustar valores a precios reales (2018)
+nearshoring <- nearshoring %>%
+  mutate(across(c(mxn_new_fdi, mxn_reinv_profits, mxn_intercom_acc, mxn_total_fdi, real_wage, mxn_exports_miles_dlls),
+    ~ . / inpc * 100,
+    .names = "real_{.col}"
+  ))
+
+# Convertir region_name a factor para evitar problemas con ggplot2
+nearshoring <- nearshoring %>%
+  mutate(region_name = as.factor(region_name))
+
+# Subset solo con variables reales en MXN (sin dólares)
+nearshoring_clean <- nearshoring %>%
+  dplyr::select(
+    state, year, region_name, region_num,
+    real_mxn_new_fdi, real_mxn_reinv_profits, real_mxn_intercom_acc,
+    real_mxn_total_fdi, real_wage, real_mxn_exports_miles_dlls,
+    crime_rate, unemployment, employment, business_activity,
+    pop_density, good_governance, ratio_public_investment,
+    lq_primary, lq_secondary, lq_tertiary, patents_rate,
+    exchange_rate, inpc, border_distance, trump_election, college_education
+  )
+
+# Convertir variables con negativos a log
+nearshoring_clean$log_real_mxn_new_fdi <- ifelse(
+  nearshoring_clean$real_mxn_new_fdi >= 0,
+  log(nearshoring_clean$real_mxn_new_fdi + 1),
+  -log(abs(nearshoring_clean$real_mxn_new_fdi))
+)
+
+nearshoring_clean$log_real_mxn_total_fdi <- ifelse(
+  nearshoring_clean$real_mxn_total_fdi >= 0,
+  log(nearshoring_clean$real_mxn_total_fdi + 1),
+  -log(abs(nearshoring_clean$real_mxn_total_fdi))
+)
+```
 
 ## Introducción
 
@@ -221,16 +277,20 @@ summary(autoarima <- auto.arima(nearshoring_ts$real_Mxn_New_FDI_Inflows))
 ### VAR
 ```{r modelo VaR}
 # Seleccionar variables de interés
-nearshoring_ts_var <- nearshoring_ts[, c("log_real_mxn_new_fdi", "Exchange_Rate")]
+nearshoring_ts_var <- nearshoring_clean[, c("log_real_mxn_new_fdi", "real_wage", "lq_tertiary")]
 
-# Ajustar el modelo VAR
-var_model <- VAR(nearshoring_ts_var, p = 2, type = "const")
+# Ajustar el modelo VAR con un orden óptimo de rezagos basado en AIC
+lag_selection <- VARselect(nearshoring_ts_var, lag.max = 1, type = "const")
+optimal_lag <- lag_selection$selection["AIC(n)"]  # Puedes cambiar a BIC si prefieres
+
+# Ajustar el modelo VAR con el lag óptimo
+var_model <- VAR(nearshoring_ts_var, p = optimal_lag, type = "const")
 
 # Mostrar resumen del modelo
 summary(var_model)
 
-# Prueba de causalidad de Granger
-granger_test <- causality(var_model, cause = "Exchange_Rate")
+# Prueba de causalidad de Granger (corrección en la sintaxis de la lista de variables causales y paréntesis)
+granger_test <- causality(var_model, cause = c("real_wage", "lq_tertiary"))
 print(granger_test)
 ```
 

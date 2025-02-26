@@ -250,6 +250,104 @@ fixed_time_model<-plm(log_real_mxn_new_fdi ~ business_activity + log(real_wage) 
 summary(fixed_time_model) # time fixed effects are unobservable factors that change over time but are constant across entities (e.g., exchange rate). 
 ```
 
+```{r}
+library(dplyr)
+
+# Obtener valores ajustados
+nearshoring_clean$fitted_values <- fitted(fixed_time_model)
+
+# Calcular RMSE por estado
+rmse_by_state <- nearshoring_clean %>%
+  group_by(state) %>%
+  summarise(
+    rmse = sqrt(mean((log_real_mxn_new_fdi - fitted_values)^2)),
+    penultimate_predicted = nth(fitted_values, n() - 1),  # Penúltima predicción
+    last_predicted = last(fitted_values),                 # Última predicción
+    penultimate_real = nth(log_real_mxn_new_fdi, n() - 1), # Penúltimo valor real
+    last_real = last(log_real_mxn_new_fdi)                 # Último valor real
+  ) %>%
+  mutate(
+    predicted_change = ifelse(last_predicted > penultimate_predicted, "Increase", "Decrease"),
+    real_change = ifelse(last_real > penultimate_real, "Increase", "Decrease"),
+    accuracy = predicted_change == real_change  # TRUE si coincidieron, FALSE si no
+  ) %>%
+  arrange(rmse)  # Ordenar de menor a mayor RMSE
+
+print(rmse_by_state)
+```
+
+```{r}
+# Obtener el mapa de México con divisiones por estado
+mexico_map <- ne_states(country = "Mexico", returnclass = "sf")
+
+# Normalizar nombres de estados en el mapa
+mexico_map$name <- mexico_map$name %>%
+  tolower() %>%
+  stri_trans_general("Latin-ASCII") %>%
+  str_replace_all("distrito federal", "ciudad de mexico")  # Cambiar Distrito Federal a Ciudad de México
+
+# Normalizar nombres de estados en el dataset RMSE
+rmse_by_state <- rmse_by_state %>%
+  mutate(state = tolower(state) %>% 
+           stri_trans_general("Latin-ASCII") %>%
+           str_replace_all("distrito federal", "ciudad de mexico"))
+
+# Unir datos de RMSE con el mapa de México
+mexico_map <- mexico_map %>%
+  left_join(rmse_by_state, by = c("name" = "state"))
+
+# Crear el mapa con la paleta de colores personalizada
+rmse_map <- ggplot(mexico_map) +
+  geom_sf(aes(fill = rmse), color = "black", size = 0.2) +
+  scale_fill_gradient2(low = "#1bbb30", mid = "#ffb02c", high = "#ff3131", midpoint = mean(rmse_by_state$rmse, na.rm = TRUE), na.value = "gray80") +  
+  theme_minimal() +
+  labs(title = "Mapa de RMSE por Estado en México",
+       subtitle = "Valores de RMSE del Modelo de Efectos Fijos de Tiempo",
+       fill = "RMSE",
+       caption = "Fuente: Modelo Panel Nearshoring")
+
+# Mostrar el mapa
+print(rmse_map)
+```
+
+```{r}
+# Obtener el mapa de México con divisiones por estado
+mexico_map <- ne_states(country = "Mexico", returnclass = "sf")
+
+# Normalizar nombres de estados en el mapa
+mexico_map$name <- mexico_map$name %>%
+  tolower() %>%
+  stri_trans_general("Latin-ASCII") %>%
+  str_replace_all("distrito federal", "ciudad de mexico")  # Cambiar Distrito Federal a Ciudad de México
+
+# Filtrar solo estados donde accuracy es TRUE
+filtered_data <- rmse_by_state %>%
+  filter(accuracy == TRUE) %>%
+  mutate(state = tolower(state) %>% 
+           stri_trans_general("Latin-ASCII") %>%
+           str_replace_all("distrito federal", "ciudad de mexico"))
+
+# Unir datos de `last_real` con el mapa solo para estados con `accuracy == TRUE`
+mexico_map_filtered <- mexico_map %>%
+  left_join(filtered_data, by = c("name" = "state"))
+
+# Crear el mapa con la misma escala de colores
+last_real_map <- ggplot(mexico_map_filtered) +
+  geom_sf(aes(fill = last_real), color = "black", size = 0.2) +
+  scale_fill_gradient2(low = "#ff3131", mid = "#ffb02c", high = "#1bbb30", 
+                       midpoint = median(filtered_data$last_real, na.rm = TRUE), 
+                       na.value = "gray80") +  
+  theme_minimal() +
+  labs(title = "Mapa de Últimos Valores Reales en México",
+       subtitle = "Solo para estados donde la predicción fue precisa",
+       fill = "Último Valor Real",
+       caption = "Fuente: Modelo Panel Nearshoring")
+
+# Mostrar el mapa
+print(last_real_map)
+```
+
+
 Dado que hemos identificado heterocedasticidad y autocorrelación, podemos aplicar el método de Arellano para corregir estos efectos y mejorar la estimación de los coeficientes.
 
 ```{r modelo panel especificación 3 - FE – Time Effects (Arellano Coef)}
