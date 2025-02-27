@@ -218,7 +218,7 @@ nearshoring_clean$college_lqt_interaction <- nearshoring_clean$college_education
 
 model2 <- '
   log_real_mxn_new_fdi ~ log_real_wage + lq_tertiary + border_distance + college_education + college_lqt_interaction
-  college_education ~ log_real_wage + patents_rate + inpc
+  college_education ~ business_activity + patents_rate + inpc
 '
 
 fit2 <- sem(model2, data = nearshoring_clean)
@@ -228,11 +228,6 @@ summary(fit2, fit.measures = TRUE, standardized = TRUE, rsquare = TRUE)
 # Gráfico del modelo SEM
 semPaths(fit2, what = "paths", whatLabels = "par", style = "lisrel", rotation = 2)
 ```
-
-```{r}
-
-```
-
 
 ### Modelo 3 - Salario Real y NIED 
 ```{r sem log_nfdi y salario}
@@ -248,13 +243,3 @@ summary(fit3, fit.measures = TRUE, standardized = TRUE, rsquare = TRUE)
 # Gráfico del modelo SEM
 semPaths(fit3, what = "paths", whatLabels = "par", style = "lisrel", rotation = 2)
 ```
-
-## Including Plots
-
-You can also embed plots, for example:
-
-```{r pressure, echo=FALSE}
-plot(pressure)
-```
-
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
